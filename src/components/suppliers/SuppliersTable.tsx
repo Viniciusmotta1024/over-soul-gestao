@@ -1,19 +1,22 @@
 import { Supplier } from '@/types';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Phone, Package, Mail } from 'lucide-react';
+import { Phone, Package, Mail, Edit, Trash2 } from 'lucide-react';
 
 interface SuppliersTableProps {
   suppliers: Supplier[];
+  onEdit: (supplier: Supplier) => void;
+  onDelete: (supplier: Supplier) => void;
 }
 
-export function SuppliersTable({ suppliers }: SuppliersTableProps) {
+export function SuppliersTable({ suppliers, onEdit, onDelete }: SuppliersTableProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -51,9 +54,33 @@ export function SuppliersTable({ suppliers }: SuppliersTableProps) {
                       )}
                     </div>
                   </div>
-                  <Badge className="ml-auto mr-4 bg-secondary text-muted-foreground border-border">
-                    {supplier.products.length} produtos
-                  </Badge>
+                  <div className="ml-auto mr-4 flex items-center gap-2">
+                    <Badge className="bg-secondary text-muted-foreground border-border">
+                      {supplier.products.length} produtos
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(supplier);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(supplier);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4">

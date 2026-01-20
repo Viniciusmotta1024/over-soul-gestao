@@ -9,12 +9,18 @@ import { SuppliersTable } from '@/components/suppliers/SuppliersTable';
 import { ClientsTable } from '@/components/clients/ClientsTable';
 import { ReportsView } from '@/components/reports/ReportsView';
 import { AddClientDialog } from '@/components/clients/AddClientDialog';
+import { EditClientDialog } from '@/components/clients/EditClientDialog';
 import { AddSupplierDialog } from '@/components/suppliers/AddSupplierDialog';
+import { EditSupplierDialog } from '@/components/suppliers/EditSupplierDialog';
+import { AddOrderDialog } from '@/components/orders/AddOrderDialog';
+import { EditOrderDialog } from '@/components/orders/EditOrderDialog';
+import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 import { mockOrders, mockSuppliers, mockClients, salesChannels } from '@/data/mockData';
 import { Package, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Plus, Filter, Download } from 'lucide-react';
 import { Order, Client, Supplier } from '@/types';
+import { useToast } from '@/hooks/use-toast';
 
 const pageConfig: Record<string, { title: string; subtitle: string }> = {
   dashboard: { title: 'Dashboard', subtitle: 'Visão geral dos seus pedidos e vendas' },
@@ -27,12 +33,29 @@ const pageConfig: Record<string, { title: string; subtitle: string }> = {
 };
 
 const Index = () => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [clients, setClients] = useState<Client[]>(mockClients);
   const [suppliers, setSuppliers] = useState<Supplier[]>(mockSuppliers);
+
+  // Dialog states
   const [addClientOpen, setAddClientOpen] = useState(false);
+  const [editClientOpen, setEditClientOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  
   const [addSupplierOpen, setAddSupplierOpen] = useState(false);
+  const [editSupplierOpen, setEditSupplierOpen] = useState(false);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  
+  const [addOrderOpen, setAddOrderOpen] = useState(false);
+  const [editOrderOpen, setEditOrderOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  // Delete dialog states
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteType, setDeleteType] = useState<'client' | 'supplier' | 'order'>('client');
+  const [itemToDelete, setItemToDelete] = useState<Client | Supplier | Order | null>(null);
 
   // Calculate stats from actual data
   const totalOrders = orders.length;
@@ -56,27 +79,149 @@ const Index = () => {
     }).format(value);
   };
 
+  // Client handlers
   const handleAddClient = (clientData: Omit<Client, 'id' | 'orders' | 'totalSpent' | 'createdAt'>) => {
     const newClient: Client = {
       ...clientData,
-      id: String(clients.length + 1),
+      id: String(Date.now()),
       orders: 0,
       totalSpent: 0,
       createdAt: new Date(),
     };
     setClients([...clients, newClient]);
+    toast({ title: 'Cliente adicionado', description: `${newClient.name} foi adicionado com sucesso.` });
   };
 
+  const handleEditClient = (client: Client) => {
+    setSelectedClient(client);
+    setEditClientOpen(true);
+  };
+
+  const handleSaveClient = (updatedClient: Client) => {
+    setClients(clients.map(c => c.id === updatedClient.id ? updatedClient : c));
+    toast({ title: 'Cliente atualizado', description: `${updatedClient.name} foi atualizado com sucesso.` });
+  };
+
+  const handleDeleteClient = (client: Client) => {
+    setItemToDelete(client);
+    setDeleteType('client');
+    setDeleteDialogOpen(true);
+  };
+
+  // Supplier handlers
   const handleAddSupplier = (supplierData: Omit<Supplier, 'id'>) => {
     const newSupplier: Supplier = {
       ...supplierData,
-      id: String(suppliers.length + 1),
+      id: String(Date.now()),
     };
     setSuppliers([...suppliers, newSupplier]);
+    toast({ title: 'Fornecedor adicionado', description: `${newSupplier.name} foi adicionado com sucesso.` });
+  };
+
+  const handleEditSupplier = (supplier: Supplier) => {
+    setSelectedSupplier(supplier);
+    setEditSupplierOpen(true);
+  };
+
+  const handleSaveSupplier = (updatedSupplier: Supplier) => {
+    setSuppliers(suppliers.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
+    toast({ title: 'Fornecedor atualizado', description: `${updatedSupplier.name} foi atualizado com sucesso.` });
+  };
+
+  const handleDeleteSupplier = (supplier: Supplier) => {
+    setItemToDelete(supplier);
+    setDeleteType('supplier');
+    setDeleteDialogOpen(true);
+  };
+
+  // Order handlers
+  const handleAddOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
+    const newOrder: Order = {
+      ...orderData,
+      id: String(Date.now()),
+      createdAt: new Date(),
+    };
+    setOrders([newOrder, ...orders]);
+    
+    // Update client stats
+    if (orderData.customerId) {
+      setClients(clients.map(c => {
+        if (c.id === orderData.customerId) {
+          return {
+            ...c,
+            orders: c.orders + 1,
+            totalSpent: c.totalSpent + (orderData.salePrice * orderData.quantity),
+          };
+        }
+        return c;
+      }));
+    }
+    
+    toast({ title: 'Pedido criado', description: `Pedido para ${newOrder.customerName} foi criado com sucesso.` });
+  };
+
+  const handleEditOrder = (order: Order) => {
+    setSelectedOrder(order);
+    setEditOrderOpen(true);
+  };
+
+  const handleSaveOrder = (updatedOrder: Order) => {
+    setOrders(orders.map(o => o.id === updatedOrder.id ? updatedOrder : o));
+    toast({ title: 'Pedido atualizado', description: `Pedido atualizado com sucesso.` });
+  };
+
+  const handleDeleteOrder = (order: Order) => {
+    setItemToDelete(order);
+    setDeleteType('order');
+    setDeleteDialogOpen(true);
+  };
+
+  // Confirm delete
+  const handleConfirmDelete = () => {
+    if (!itemToDelete) return;
+
+    switch (deleteType) {
+      case 'client':
+        setClients(clients.filter(c => c.id !== (itemToDelete as Client).id));
+        toast({ title: 'Cliente excluído', description: 'Cliente removido com sucesso.' });
+        break;
+      case 'supplier':
+        setSuppliers(suppliers.filter(s => s.id !== (itemToDelete as Supplier).id));
+        toast({ title: 'Fornecedor excluído', description: 'Fornecedor removido com sucesso.' });
+        break;
+      case 'order':
+        setOrders(orders.filter(o => o.id !== (itemToDelete as Order).id));
+        toast({ title: 'Pedido excluído', description: 'Pedido removido com sucesso.' });
+        break;
+    }
+
+    setDeleteDialogOpen(false);
+    setItemToDelete(null);
+  };
+
+  const getDeleteDialogContent = () => {
+    switch (deleteType) {
+      case 'client':
+        return {
+          title: 'Excluir Cliente',
+          description: `Tem certeza que deseja excluir "${(itemToDelete as Client)?.name}"? Esta ação não pode ser desfeita.`,
+        };
+      case 'supplier':
+        return {
+          title: 'Excluir Fornecedor',
+          description: `Tem certeza que deseja excluir "${(itemToDelete as Supplier)?.name}"? Esta ação não pode ser desfeita.`,
+        };
+      case 'order':
+        return {
+          title: 'Excluir Pedido',
+          description: `Tem certeza que deseja excluir o pedido de "${(itemToDelete as Order)?.customerName}"? Esta ação não pode ser desfeita.`,
+        };
+    }
   };
 
   const { title, subtitle } = pageConfig[activeTab] || pageConfig.dashboard;
   const channelStats = getChannelStats();
+  const deleteContent = getDeleteDialogContent();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -154,12 +299,19 @@ const Index = () => {
                   Exportar
                 </Button>
               </div>
-              <Button className="gap-2 bg-primary hover:bg-primary/90">
+              <Button 
+                className="gap-2 bg-primary hover:bg-primary/90"
+                onClick={() => setAddOrderOpen(true)}
+              >
                 <Plus className="h-4 w-4" />
                 Novo Pedido
               </Button>
             </div>
-            <OrdersTable orders={orders} />
+            <OrdersTable 
+              orders={orders} 
+              onEdit={handleEditOrder}
+              onDelete={handleDeleteOrder}
+            />
           </div>
         );
 
@@ -175,11 +327,10 @@ const Index = () => {
                 Novo Cliente
               </Button>
             </div>
-            <ClientsTable clients={clients} />
-            <AddClientDialog 
-              open={addClientOpen} 
-              onOpenChange={setAddClientOpen}
-              onAdd={handleAddClient}
+            <ClientsTable 
+              clients={clients} 
+              onEdit={handleEditClient}
+              onDelete={handleDeleteClient}
             />
           </div>
         );
@@ -196,11 +347,10 @@ const Index = () => {
                 Novo Fornecedor
               </Button>
             </div>
-            <SuppliersTable suppliers={suppliers} />
-            <AddSupplierDialog
-              open={addSupplierOpen}
-              onOpenChange={setAddSupplierOpen}
-              onAdd={handleAddSupplier}
+            <SuppliersTable 
+              suppliers={suppliers} 
+              onEdit={handleEditSupplier}
+              onDelete={handleDeleteSupplier}
             />
           </div>
         );
@@ -219,7 +369,12 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            <OrdersTable orders={orders} filterChannel="shopee" />
+            <OrdersTable 
+              orders={orders} 
+              filterChannel="shopee" 
+              onEdit={handleEditOrder}
+              onDelete={handleDeleteOrder}
+            />
           </div>
         );
 
@@ -237,7 +392,12 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            <OrdersTable orders={orders} filterChannel="ministerio" />
+            <OrdersTable 
+              orders={orders} 
+              filterChannel="ministerio" 
+              onEdit={handleEditOrder}
+              onDelete={handleDeleteOrder}
+            />
           </div>
         );
 
@@ -260,6 +420,58 @@ const Index = () => {
           {renderContent()}
         </div>
       </main>
+
+      {/* Client Dialogs */}
+      <AddClientDialog 
+        open={addClientOpen} 
+        onOpenChange={setAddClientOpen}
+        onAdd={handleAddClient}
+      />
+      <EditClientDialog
+        open={editClientOpen}
+        onOpenChange={setEditClientOpen}
+        client={selectedClient}
+        onSave={handleSaveClient}
+      />
+
+      {/* Supplier Dialogs */}
+      <AddSupplierDialog
+        open={addSupplierOpen}
+        onOpenChange={setAddSupplierOpen}
+        onAdd={handleAddSupplier}
+      />
+      <EditSupplierDialog
+        open={editSupplierOpen}
+        onOpenChange={setEditSupplierOpen}
+        supplier={selectedSupplier}
+        onSave={handleSaveSupplier}
+      />
+
+      {/* Order Dialogs */}
+      <AddOrderDialog
+        open={addOrderOpen}
+        onOpenChange={setAddOrderOpen}
+        clients={clients}
+        suppliers={suppliers}
+        onAdd={handleAddOrder}
+      />
+      <EditOrderDialog
+        open={editOrderOpen}
+        onOpenChange={setEditOrderOpen}
+        order={selectedOrder}
+        clients={clients}
+        suppliers={suppliers}
+        onSave={handleSaveOrder}
+      />
+
+      {/* Delete Confirmation */}
+      <DeleteConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={deleteContent.title}
+        description={deleteContent.description}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 };
