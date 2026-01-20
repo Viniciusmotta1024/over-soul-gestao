@@ -6,6 +6,7 @@ import { ChannelCard } from '@/components/dashboard/ChannelCard';
 import { RecentOrders } from '@/components/dashboard/RecentOrders';
 import { OrdersTable } from '@/components/orders/OrdersTable';
 import { OrderFilters, OrderFiltersState } from '@/components/orders/OrderFilters';
+import { ProductFilters, ProductFiltersState } from '@/components/products/ProductFilters';
 import { SuppliersTable } from '@/components/suppliers/SuppliersTable';
 import { ClientsTable } from '@/components/clients/ClientsTable';
 import { ProductsTable } from '@/components/products/ProductsTable';
@@ -58,6 +59,7 @@ const Index = () => {
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [orderFilters, setOrderFilters] = useState<OrderFiltersState>({});
+  const [productFilters, setProductFilters] = useState<ProductFiltersState>({ sortBy: 'collection', sortOrder: 'asc' });
 
   // Use database suppliers or fallback to mock for initial setup
   const effectiveSuppliers = suppliers.length > 0 ? suppliers : mockSuppliers;
@@ -95,6 +97,62 @@ const Index = () => {
       return true;
     });
   }, [orders, orderFilters]);
+
+  // Get unique collections for filter
+  const productCollections = useMemo(() => {
+    const collections = new Set<string>();
+    products.forEach(p => {
+      if (p.collection) collections.add(p.collection);
+    });
+    return Array.from(collections).sort();
+  }, [products]);
+
+  // Filter and sort products
+  const filteredProducts = useMemo(() => {
+    let result = products.filter(product => {
+      if (productFilters.search) {
+        const search = productFilters.search.toLowerCase();
+        if (!product.name.toLowerCase().includes(search) && 
+            !product.collection?.toLowerCase().includes(search)) {
+          return false;
+        }
+      }
+      if (productFilters.collection && product.collection !== productFilters.collection) return false;
+      if (productFilters.status === 'active' && !product.isActive) return false;
+      if (productFilters.status === 'inactive' && product.isActive) return false;
+      if (productFilters.stockStatus === 'out' && product.stock !== 0) return false;
+      if (productFilters.stockStatus === 'low' && (product.stock === 0 || product.stock >= 10)) return false;
+      return true;
+    });
+
+    // Sort products
+    const sortBy = productFilters.sortBy || 'collection';
+    const sortOrder = productFilters.sortOrder || 'asc';
+    
+    result.sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'price':
+          comparison = a.price - b.price;
+          break;
+        case 'stock':
+          comparison = a.stock - b.stock;
+          break;
+        case 'collection':
+          comparison = (a.collection || 'zzz').localeCompare(b.collection || 'zzz');
+          break;
+        case 'created':
+          comparison = a.createdAt.getTime() - b.createdAt.getTime();
+          break;
+      }
+      return sortOrder === 'desc' ? -comparison : comparison;
+    });
+
+    return result;
+  }, [products, productFilters]);
 
   // Calculate stats from actual data
   const totalOrders = orders.length;
@@ -386,7 +444,13 @@ const Index = () => {
       case 'products':
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <ProductFilters
+                collections={productCollections}
+                filters={productFilters}
+                onFiltersChange={setProductFilters}
+                onClear={() => setProductFilters({ sortBy: 'collection', sortOrder: 'asc' })}
+              />
               <Button 
                 className="gap-2 bg-primary hover:bg-primary/90"
                 onClick={() => setAddProductOpen(true)}
@@ -396,9 +460,10 @@ const Index = () => {
               </Button>
             </div>
             <ProductsTable 
-              products={products} 
+              products={filteredProducts} 
               onEdit={handleEditProduct}
               onDelete={handleDeleteProduct}
+              groupByCollection={productFilters.sortBy === 'collection'}
             />
           </div>
         );
