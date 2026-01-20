@@ -14,6 +14,8 @@ import { ReportsView } from '@/components/reports/ReportsView';
 import { PricingCalculator } from '@/components/pricing/PricingCalculator';
 import { TeamTable } from '@/components/team/TeamTable';
 import { AddTeamMemberDialog } from '@/components/team/AddTeamMemberDialog';
+import { ActivityLogsDialog } from '@/components/settings/ActivityLogsDialog';
+import { PasswordRecoveryDialog } from '@/components/settings/PasswordRecoveryDialog';
 import { AddClientDialog } from '@/components/clients/AddClientDialog';
 import { EditClientDialog } from '@/components/clients/EditClientDialog';
 import { AddSupplierDialog } from '@/components/suppliers/AddSupplierDialog';
@@ -89,6 +91,10 @@ const Index = () => {
   // Team dialog states
   const [addTeamMemberOpen, setAddTeamMemberOpen] = useState(false);
   const [teamMemberToDelete, setTeamMemberToDelete] = useState<{ id: string; userId: string; name: string } | null>(null);
+
+  // Settings dialog states
+  const [activityLogsOpen, setActivityLogsOpen] = useState(false);
+  const [passwordRecoveryOpen, setPasswordRecoveryOpen] = useState(false);
 
   // Delete dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -389,11 +395,12 @@ const Index = () => {
     refetchOrders();
   };
 
-  const handleSettingsClick = () => {
-    toast({
-      title: 'Configurações',
-      description: 'Página de configurações em desenvolvimento.',
-    });
+  const handleActivityLogsClick = () => {
+    setActivityLogsOpen(true);
+  };
+
+  const handlePasswordRecoveryClick = () => {
+    setPasswordRecoveryOpen(true);
   };
 
   const { title, subtitle } = pageConfig[activeTab] || pageConfig.dashboard;
@@ -681,7 +688,8 @@ const Index = () => {
         activeTab={activeTab} 
         onTabChange={handleTabChange}
         newOrdersCount={newOrdersCount}
-        onSettingsClick={handleSettingsClick}
+        onActivityLogsClick={handleActivityLogsClick}
+        onPasswordRecoveryClick={handlePasswordRecoveryClick}
         isAdmin={isAdmin}
       />
       
@@ -769,6 +777,16 @@ const Index = () => {
         open={addTeamMemberOpen}
         onOpenChange={setAddTeamMemberOpen}
         onAdd={createUser}
+      />
+
+      {/* Settings Dialogs */}
+      <ActivityLogsDialog
+        open={activityLogsOpen}
+        onOpenChange={setActivityLogsOpen}
+      />
+      <PasswordRecoveryDialog
+        open={passwordRecoveryOpen}
+        onOpenChange={setPasswordRecoveryOpen}
       />
 
       {/* Delete Confirmation */}
