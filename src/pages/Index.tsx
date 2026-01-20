@@ -236,6 +236,11 @@ const Index = () => {
     setDeleteDialogOpen(true);
   };
 
+  const handleOrderStatusChange = async (order: Order, newStatus: Order['status']) => {
+    const updatedOrder = { ...order, status: newStatus };
+    await updateOrder(updatedOrder);
+  };
+
   // Product handlers
   const handleAddProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
     await addProduct(productData);
@@ -437,6 +442,7 @@ const Index = () => {
               orders={filteredOrders} 
               onEdit={handleEditOrder}
               onDelete={handleDeleteOrder}
+              onStatusChange={handleOrderStatusChange}
             />
           </div>
         );
@@ -527,6 +533,7 @@ const Index = () => {
               filterChannel="shopee" 
               onEdit={handleEditOrder}
               onDelete={handleDeleteOrder}
+              onStatusChange={handleOrderStatusChange}
             />
           </div>
         );
@@ -550,6 +557,7 @@ const Index = () => {
               filterChannel="ministerio" 
               onEdit={handleEditOrder}
               onDelete={handleDeleteOrder}
+              onStatusChange={handleOrderStatusChange}
             />
           </div>
         );
