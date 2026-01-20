@@ -202,6 +202,7 @@ export type Database = {
           original_price: number | null
           price: number
           sizes: string[]
+          sort_order: number | null
           stock: number
           supplier_cost: number
           updated_at: string
@@ -217,6 +218,7 @@ export type Database = {
           original_price?: number | null
           price?: number
           sizes?: string[]
+          sort_order?: number | null
           stock?: number
           supplier_cost?: number
           updated_at?: string
@@ -232,6 +234,7 @@ export type Database = {
           original_price?: number | null
           price?: number
           sizes?: string[]
+          sort_order?: number | null
           stock?: number
           supplier_cost?: number
           updated_at?: string

@@ -59,6 +59,7 @@ export interface Product {
   stock: number;
   sizes: string[];
   isActive: boolean;
+  sortOrder: number;
   createdAt: Date;
   updatedAt: Date;
 }

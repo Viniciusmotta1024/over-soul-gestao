@@ -13,7 +13,8 @@ export function useProducts() {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('collection', { ascending: true })
+        .order('sort_order', { ascending: true });
 
       if (error) throw error;
 
@@ -29,6 +30,7 @@ export function useProducts() {
         stock: p.stock,
         sizes: p.sizes || [],
         isActive: p.is_active,
+        sortOrder: p.sort_order || 0,
         createdAt: new Date(p.created_at),
         updatedAt: new Date(p.updated_at),
       }));
@@ -75,6 +77,7 @@ export function useProducts() {
         stock: data.stock,
         sizes: data.sizes || [],
         isActive: data.is_active,
+        sortOrder: data.sort_order || 0,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -140,5 +143,43 @@ export function useProducts() {
     fetchProducts();
   }, []);
 
-  return { products, loading, addProduct, updateProduct, deleteProduct, refetch: fetchProducts };
+  const updateProductsOrder = async (reorderedProducts: Product[]) => {
+    try {
+      // Update sort_order for each product in the batch
+      const updates = reorderedProducts.map((product, index) => ({
+        id: product.id,
+        sort_order: index + 1,
+      }));
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('products')
+          .update({ sort_order: update.sort_order })
+          .eq('id', update.id);
+
+        if (error) throw error;
+      }
+
+      // Update local state with new order
+      setProducts(prev => {
+        const updated = [...prev];
+        reorderedProducts.forEach((product, index) => {
+          const existingIndex = updated.findIndex(p => p.id === product.id);
+          if (existingIndex !== -1) {
+            updated[existingIndex] = { ...updated[existingIndex], sortOrder: index + 1 };
+          }
+        });
+        return updated;
+      });
+
+      toast({ title: 'Ordem atualizada', description: 'A ordem dos produtos foi salva.' });
+    } catch (error) {
+      console.error('Error updating products order:', error);
+      toast({ title: 'Erro', description: 'Erro ao salvar ordem dos produtos', variant: 'destructive' });
+      // Refetch to restore correct order
+      fetchProducts();
+    }
+  };
+
+  return { products, loading, addProduct, updateProduct, deleteProduct, updateProductsOrder, refetch: fetchProducts };
 }
