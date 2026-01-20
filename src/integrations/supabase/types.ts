@@ -109,6 +109,87 @@ export type Database = {
           },
         ]
       }
+      pricing_dtf: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          max_meters: number | null
+          min_meters: number
+          price_per_meter: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          max_meters?: number | null
+          min_meters: number
+          price_per_meter: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          max_meters?: number | null
+          min_meters?: number
+          price_per_meter?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pricing_freight: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      pricing_shirts: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          price: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           collection: string | null
