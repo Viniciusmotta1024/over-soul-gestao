@@ -1,13 +1,15 @@
 import { Bell, Search, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { ReactNode } from 'react';
 
 interface HeaderProps {
   title: string;
   subtitle?: string;
+  children?: ReactNode;
 }
 
-export function Header({ title, subtitle }: HeaderProps) {
+export function Header({ title, subtitle, children }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-8">
       <div>
@@ -41,6 +43,8 @@ export function Header({ title, subtitle }: HeaderProps) {
             <User className="h-5 w-5 text-primary" />
           </div>
         </Button>
+
+        {children}
       </div>
     </header>
   );

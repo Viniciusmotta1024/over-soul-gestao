@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { ChannelCard } from '@/components/dashboard/ChannelCard';
 import { RecentOrders } from '@/components/dashboard/RecentOrders';
 import { OrdersTable } from '@/components/orders/OrdersTable';
+import { OrderFilters, OrderFiltersState } from '@/components/orders/OrderFilters';
 import { SuppliersTable } from '@/components/suppliers/SuppliersTable';
 import { ClientsTable } from '@/components/clients/ClientsTable';
 import { ReportsView } from '@/components/reports/ReportsView';
@@ -15,12 +16,17 @@ import { EditSupplierDialog } from '@/components/suppliers/EditSupplierDialog';
 import { AddOrderDialog } from '@/components/orders/AddOrderDialog';
 import { EditOrderDialog } from '@/components/orders/EditOrderDialog';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
-import { mockOrders, mockSuppliers, mockClients, salesChannels } from '@/data/mockData';
-import { Package, DollarSign, TrendingUp, Users } from 'lucide-react';
+import { salesChannels, mockSuppliers } from '@/data/mockData';
+import { Package, DollarSign, TrendingUp, Users, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter, Download } from 'lucide-react';
+import { Plus, Download } from 'lucide-react';
 import { Order, Client, Supplier } from '@/types';
-import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
+import { useClients } from '@/hooks/useClients';
+import { useSuppliers } from '@/hooks/useSuppliers';
+import { useOrders } from '@/hooks/useOrders';
+import { Skeleton } from '@/components/ui/skeleton';
+import { isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
 
 const pageConfig: Record<string, { title: string; subtitle: string }> = {
   dashboard: { title: 'Dashboard', subtitle: 'Visão geral dos seus pedidos e vendas' },
@@ -33,11 +39,16 @@ const pageConfig: Record<string, { title: string; subtitle: string }> = {
 };
 
 const Index = () => {
-  const { toast } = useToast();
+  const { signOut, user } = useAuth();
+  const { clients, loading: clientsLoading, addClient, updateClient, deleteClient } = useClients();
+  const { suppliers, loading: suppliersLoading, addSupplier, updateSupplier, deleteSupplier } = useSuppliers();
+  const { orders, loading: ordersLoading, addOrder, updateOrder, deleteOrder } = useOrders();
+  
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
-  const [clients, setClients] = useState<Client[]>(mockClients);
-  const [suppliers, setSuppliers] = useState<Supplier[]>(mockSuppliers);
+  const [orderFilters, setOrderFilters] = useState<OrderFiltersState>({});
+
+  // Use database suppliers or fallback to mock for initial setup
+  const effectiveSuppliers = suppliers.length > 0 ? suppliers : mockSuppliers;
 
   // Dialog states
   const [addClientOpen, setAddClientOpen] = useState(false);
@@ -56,6 +67,18 @@ const Index = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteType, setDeleteType] = useState<'client' | 'supplier' | 'order'>('client');
   const [itemToDelete, setItemToDelete] = useState<Client | Supplier | Order | null>(null);
+
+  // Filter orders
+  const filteredOrders = useMemo(() => {
+    return orders.filter(order => {
+      if (orderFilters.status && order.status !== orderFilters.status) return false;
+      if (orderFilters.channel && order.channel !== orderFilters.channel) return false;
+      if (orderFilters.clientId && order.customerId !== orderFilters.clientId) return false;
+      if (orderFilters.dateFrom && isBefore(order.createdAt, startOfDay(orderFilters.dateFrom))) return false;
+      if (orderFilters.dateTo && isAfter(order.createdAt, endOfDay(orderFilters.dateTo))) return false;
+      return true;
+    });
+  }, [orders, orderFilters]);
 
   // Calculate stats from actual data
   const totalOrders = orders.length;
@@ -80,16 +103,8 @@ const Index = () => {
   };
 
   // Client handlers
-  const handleAddClient = (clientData: Omit<Client, 'id' | 'orders' | 'totalSpent' | 'createdAt'>) => {
-    const newClient: Client = {
-      ...clientData,
-      id: String(Date.now()),
-      orders: 0,
-      totalSpent: 0,
-      createdAt: new Date(),
-    };
-    setClients([...clients, newClient]);
-    toast({ title: 'Cliente adicionado', description: `${newClient.name} foi adicionado com sucesso.` });
+  const handleAddClient = async (clientData: Omit<Client, 'id' | 'orders' | 'totalSpent' | 'createdAt'>) => {
+    await addClient(clientData);
   };
 
   const handleEditClient = (client: Client) => {
@@ -97,9 +112,8 @@ const Index = () => {
     setEditClientOpen(true);
   };
 
-  const handleSaveClient = (updatedClient: Client) => {
-    setClients(clients.map(c => c.id === updatedClient.id ? updatedClient : c));
-    toast({ title: 'Cliente atualizado', description: `${updatedClient.name} foi atualizado com sucesso.` });
+  const handleSaveClient = async (updatedClient: Client) => {
+    await updateClient(updatedClient);
   };
 
   const handleDeleteClient = (client: Client) => {
@@ -109,13 +123,8 @@ const Index = () => {
   };
 
   // Supplier handlers
-  const handleAddSupplier = (supplierData: Omit<Supplier, 'id'>) => {
-    const newSupplier: Supplier = {
-      ...supplierData,
-      id: String(Date.now()),
-    };
-    setSuppliers([...suppliers, newSupplier]);
-    toast({ title: 'Fornecedor adicionado', description: `${newSupplier.name} foi adicionado com sucesso.` });
+  const handleAddSupplier = async (supplierData: Omit<Supplier, 'id'>) => {
+    await addSupplier(supplierData);
   };
 
   const handleEditSupplier = (supplier: Supplier) => {
@@ -123,9 +132,8 @@ const Index = () => {
     setEditSupplierOpen(true);
   };
 
-  const handleSaveSupplier = (updatedSupplier: Supplier) => {
-    setSuppliers(suppliers.map(s => s.id === updatedSupplier.id ? updatedSupplier : s));
-    toast({ title: 'Fornecedor atualizado', description: `${updatedSupplier.name} foi atualizado com sucesso.` });
+  const handleSaveSupplier = async (updatedSupplier: Supplier) => {
+    await updateSupplier(updatedSupplier);
   };
 
   const handleDeleteSupplier = (supplier: Supplier) => {
@@ -135,29 +143,8 @@ const Index = () => {
   };
 
   // Order handlers
-  const handleAddOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
-    const newOrder: Order = {
-      ...orderData,
-      id: String(Date.now()),
-      createdAt: new Date(),
-    };
-    setOrders([newOrder, ...orders]);
-    
-    // Update client stats
-    if (orderData.customerId) {
-      setClients(clients.map(c => {
-        if (c.id === orderData.customerId) {
-          return {
-            ...c,
-            orders: c.orders + 1,
-            totalSpent: c.totalSpent + (orderData.salePrice * orderData.quantity),
-          };
-        }
-        return c;
-      }));
-    }
-    
-    toast({ title: 'Pedido criado', description: `Pedido para ${newOrder.customerName} foi criado com sucesso.` });
+  const handleAddOrder = async (orderData: Omit<Order, 'id' | 'createdAt'>) => {
+    await addOrder(orderData);
   };
 
   const handleEditOrder = (order: Order) => {
@@ -165,9 +152,8 @@ const Index = () => {
     setEditOrderOpen(true);
   };
 
-  const handleSaveOrder = (updatedOrder: Order) => {
-    setOrders(orders.map(o => o.id === updatedOrder.id ? updatedOrder : o));
-    toast({ title: 'Pedido atualizado', description: `Pedido atualizado com sucesso.` });
+  const handleSaveOrder = async (updatedOrder: Order) => {
+    await updateOrder(updatedOrder);
   };
 
   const handleDeleteOrder = (order: Order) => {
@@ -177,21 +163,18 @@ const Index = () => {
   };
 
   // Confirm delete
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
 
     switch (deleteType) {
       case 'client':
-        setClients(clients.filter(c => c.id !== (itemToDelete as Client).id));
-        toast({ title: 'Cliente excluído', description: 'Cliente removido com sucesso.' });
+        await deleteClient((itemToDelete as Client).id);
         break;
       case 'supplier':
-        setSuppliers(suppliers.filter(s => s.id !== (itemToDelete as Supplier).id));
-        toast({ title: 'Fornecedor excluído', description: 'Fornecedor removido com sucesso.' });
+        await deleteSupplier((itemToDelete as Supplier).id);
         break;
       case 'order':
-        setOrders(orders.filter(o => o.id !== (itemToDelete as Order).id));
-        toast({ title: 'Pedido excluído', description: 'Pedido removido com sucesso.' });
+        await deleteOrder((itemToDelete as Order).id);
         break;
     }
 
@@ -223,7 +206,22 @@ const Index = () => {
   const channelStats = getChannelStats();
   const deleteContent = getDeleteDialogContent();
 
+  const isLoading = clientsLoading || suppliersLoading || ordersLoading;
+
   const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="space-y-6">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[1, 2, 3, 4].map(i => (
+              <Skeleton key={i} className="h-32 rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-64 rounded-xl" />
+        </div>
+      );
+    }
+
     switch (activeTab) {
       case 'dashboard':
         return (
@@ -288,27 +286,29 @@ const Index = () => {
       case 'orders':
         return (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <OrderFilters
+                clients={clients}
+                filters={orderFilters}
+                onFiltersChange={setOrderFilters}
+                onClear={() => setOrderFilters({})}
+              />
               <div className="flex items-center gap-2">
-                <Button variant="outline" className="gap-2">
-                  <Filter className="h-4 w-4" />
-                  Filtrar
-                </Button>
                 <Button variant="outline" className="gap-2">
                   <Download className="h-4 w-4" />
                   Exportar
                 </Button>
+                <Button 
+                  className="gap-2 bg-primary hover:bg-primary/90"
+                  onClick={() => setAddOrderOpen(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  Novo Pedido
+                </Button>
               </div>
-              <Button 
-                className="gap-2 bg-primary hover:bg-primary/90"
-                onClick={() => setAddOrderOpen(true)}
-              >
-                <Plus className="h-4 w-4" />
-                Novo Pedido
-              </Button>
             </div>
             <OrdersTable 
-              orders={orders} 
+              orders={filteredOrders} 
               onEdit={handleEditOrder}
               onDelete={handleDeleteOrder}
             />
@@ -348,7 +348,7 @@ const Index = () => {
               </Button>
             </div>
             <SuppliersTable 
-              suppliers={suppliers} 
+              suppliers={effectiveSuppliers} 
               onEdit={handleEditSupplier}
               onDelete={handleDeleteSupplier}
             />
@@ -414,7 +414,17 @@ const Index = () => {
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       
       <main className="ml-64">
-        <Header title={title} subtitle={subtitle} />
+        <Header title={title} subtitle={subtitle}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => signOut()}
+            className="gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+            Sair
+          </Button>
+        </Header>
         
         <div className="p-8">
           {renderContent()}
@@ -452,7 +462,7 @@ const Index = () => {
         open={addOrderOpen}
         onOpenChange={setAddOrderOpen}
         clients={clients}
-        suppliers={suppliers}
+        suppliers={effectiveSuppliers}
         onAdd={handleAddOrder}
       />
       <EditOrderDialog
@@ -460,7 +470,7 @@ const Index = () => {
         onOpenChange={setEditOrderOpen}
         order={selectedOrder}
         clients={clients}
-        suppliers={suppliers}
+        suppliers={effectiveSuppliers}
         onSave={handleSaveOrder}
       />
 
