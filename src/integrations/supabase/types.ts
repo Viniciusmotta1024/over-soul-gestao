@@ -184,6 +184,60 @@ export type Database = {
         }
         Relationships: []
       }
+      quotes: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          dtf_freight: number
+          dtf_meters: number
+          dtf_price_per_meter: number
+          id: string
+          notes: string | null
+          profit_margin: number
+          quantity: number
+          shirt_freight: number
+          shirt_price: number
+          shirt_type: string
+          suggested_price: number
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string | null
+          dtf_freight?: number
+          dtf_meters?: number
+          dtf_price_per_meter?: number
+          id?: string
+          notes?: string | null
+          profit_margin?: number
+          quantity?: number
+          shirt_freight?: number
+          shirt_price: number
+          shirt_type: string
+          suggested_price: number
+          total_cost: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string | null
+          dtf_freight?: number
+          dtf_meters?: number
+          dtf_price_per_meter?: number
+          id?: string
+          notes?: string | null
+          profit_margin?: number
+          quantity?: number
+          shirt_freight?: number
+          shirt_price?: number
+          shirt_type?: string
+          suggested_price?: number
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       supplier_products: {
         Row: {
           created_at: string
