@@ -61,8 +61,8 @@ const Index = () => {
   const [orderFilters, setOrderFilters] = useState<OrderFiltersState>({});
   const [productFilters, setProductFilters] = useState<ProductFiltersState>({ sortBy: 'collection', sortOrder: 'asc' });
 
-  // Use database suppliers or fallback to mock for initial setup
-  const effectiveSuppliers = suppliers.length > 0 ? suppliers : mockSuppliers;
+  // Use only database suppliers
+  const effectiveSuppliers = suppliers;
 
   // Dialog states
   const [addClientOpen, setAddClientOpen] = useState(false);
