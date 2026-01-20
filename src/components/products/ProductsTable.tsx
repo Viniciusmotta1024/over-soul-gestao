@@ -195,13 +195,7 @@ function DragOverlayCard({ product, formatCurrency }: { product: Product; format
 export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCollection = true }: ProductsTableProps) {
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set(['all']));
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
-  const [localProducts, setLocalProducts] = useState<Product[]>(products);
   const [activeId, setActiveId] = useState<string | null>(null);
-
-  // Update local products when props change
-  useEffect(() => {
-    setLocalProducts(products);
-  }, [products]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -225,10 +219,10 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
   };
 
   const groupedProducts = useMemo(() => {
-    if (!groupByCollection) return { 'Todos os Produtos': localProducts };
+    if (!groupByCollection) return { 'Todos os Produtos': products };
     
     const groups: Record<string, Product[]> = {};
-    localProducts.forEach(product => {
+    products.forEach(product => {
       const collection = product.collection || 'Sem Coleção';
       if (!groups[collection]) groups[collection] = [];
       groups[collection].push(product);
@@ -241,7 +235,7 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
     });
     
     return Object.fromEntries(sortedEntries);
-  }, [localProducts, groupByCollection]);
+  }, [products, groupByCollection]);
 
   const toggleCollection = (collection: string) => {
     setExpandedCollections(prev => {
@@ -275,24 +269,18 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
       const oldIndex = collectionProducts.findIndex(p => p.id === active.id);
       const newIndex = collectionProducts.findIndex(p => p.id === over.id);
       
-      const newCollectionProducts = arrayMove(collectionProducts, oldIndex, newIndex);
-      
-      // Update local state immediately for responsive UI
-      setLocalProducts(prev => {
-        const otherProducts = prev.filter(p => 
-          (p.collection || 'Sem Coleção') !== collection
-        );
-        return [...otherProducts, ...newCollectionProducts];
-      });
-      
-      // Persist to database
-      onReorder?.(newCollectionProducts);
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newCollectionProducts = arrayMove(collectionProducts, oldIndex, newIndex);
+        
+        // Persist to database - this will update the sort_order and refetch will update the UI
+        onReorder?.(newCollectionProducts);
+      }
     }
   };
 
-  const activeProduct = activeId ? localProducts.find(p => p.id === activeId) : null;
+  const activeProduct = activeId ? products.find(p => p.id === activeId) : null;
 
-  if (localProducts.length === 0) {
+  if (products.length === 0) {
     return (
       <div className="rounded-lg border border-border bg-card p-12">
         <div className="flex flex-col items-center gap-2 text-muted-foreground">
@@ -391,8 +379,8 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
         
         <div className="rounded-lg border border-border bg-card overflow-hidden">
           {viewMode === 'grid' 
-            ? renderGridView(localProducts, 'all')
-            : renderTableView(localProducts, 'all')
+            ? renderGridView(products, 'all')
+            : renderTableView(products, 'all')
           }
         </div>
       </div>

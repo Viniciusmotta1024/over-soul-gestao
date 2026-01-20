@@ -160,17 +160,8 @@ export function useProducts() {
         if (error) throw error;
       }
 
-      // Update local state with new order
-      setProducts(prev => {
-        const updated = [...prev];
-        reorderedProducts.forEach((product, index) => {
-          const existingIndex = updated.findIndex(p => p.id === product.id);
-          if (existingIndex !== -1) {
-            updated[existingIndex] = { ...updated[existingIndex], sortOrder: index + 1 };
-          }
-        });
-        return updated;
-      });
+      // Refetch to get updated order from database
+      await fetchProducts();
 
       toast({ title: 'Ordem atualizada', description: 'A ordem dos produtos foi salva.' });
     } catch (error) {
