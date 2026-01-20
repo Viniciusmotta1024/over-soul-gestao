@@ -8,6 +8,7 @@ import { OrdersTable } from '@/components/orders/OrdersTable';
 import { OrderFilters, OrderFiltersState } from '@/components/orders/OrderFilters';
 import { SuppliersTable } from '@/components/suppliers/SuppliersTable';
 import { ClientsTable } from '@/components/clients/ClientsTable';
+import { ProductsTable } from '@/components/products/ProductsTable';
 import { ReportsView } from '@/components/reports/ReportsView';
 import { AddClientDialog } from '@/components/clients/AddClientDialog';
 import { EditClientDialog } from '@/components/clients/EditClientDialog';
@@ -15,22 +16,28 @@ import { AddSupplierDialog } from '@/components/suppliers/AddSupplierDialog';
 import { EditSupplierDialog } from '@/components/suppliers/EditSupplierDialog';
 import { AddOrderDialog } from '@/components/orders/AddOrderDialog';
 import { EditOrderDialog } from '@/components/orders/EditOrderDialog';
+import { AddProductDialog } from '@/components/products/AddProductDialog';
+import { EditProductDialog } from '@/components/products/EditProductDialog';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 import { salesChannels, mockSuppliers } from '@/data/mockData';
 import { Package, DollarSign, TrendingUp, Users, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download } from 'lucide-react';
-import { Order, Client, Supplier } from '@/types';
+import { Order, Client, Supplier, Product } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useClients } from '@/hooks/useClients';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useOrders } from '@/hooks/useOrders';
+import { useProducts } from '@/hooks/useProducts';
+import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { Skeleton } from '@/components/ui/skeleton';
 import { isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import { useToast } from '@/hooks/use-toast';
 
 const pageConfig: Record<string, { title: string; subtitle: string }> = {
   dashboard: { title: 'Dashboard', subtitle: 'Visão geral dos seus pedidos e vendas' },
   orders: { title: 'Pedidos', subtitle: 'Gerenciar todos os pedidos' },
+  products: { title: 'Produtos', subtitle: 'Gerenciar catálogo de produtos' },
   clients: { title: 'Clientes', subtitle: 'Gerenciar clientes e empresas' },
   suppliers: { title: 'Fornecedores', subtitle: 'Valores e produtos dos fornecedores' },
   shopee: { title: 'Shopee', subtitle: 'Pedidos do marketplace Shopee' },
@@ -39,10 +46,13 @@ const pageConfig: Record<string, { title: string; subtitle: string }> = {
 };
 
 const Index = () => {
-  const { signOut, user } = useAuth();
+  const { signOut } = useAuth();
   const { clients, loading: clientsLoading, addClient, updateClient, deleteClient } = useClients();
   const { suppliers, loading: suppliersLoading, addSupplier, updateSupplier, deleteSupplier } = useSuppliers();
-  const { orders, loading: ordersLoading, addOrder, updateOrder, deleteOrder } = useOrders();
+  const { orders, loading: ordersLoading, addOrder, updateOrder, deleteOrder, refetch: refetchOrders } = useOrders();
+  const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct } = useProducts();
+  const { newOrdersCount, clearNotifications } = useOrderNotifications();
+  const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState('dashboard');
   const [orderFilters, setOrderFilters] = useState<OrderFiltersState>({});
@@ -63,10 +73,14 @@ const Index = () => {
   const [editOrderOpen, setEditOrderOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
+  const [addProductOpen, setAddProductOpen] = useState(false);
+  const [editProductOpen, setEditProductOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
   // Delete dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteType, setDeleteType] = useState<'client' | 'supplier' | 'order'>('client');
-  const [itemToDelete, setItemToDelete] = useState<Client | Supplier | Order | null>(null);
+  const [deleteType, setDeleteType] = useState<'client' | 'supplier' | 'order' | 'product'>('client');
+  const [itemToDelete, setItemToDelete] = useState<Client | Supplier | Order | Product | null>(null);
 
   // Filter orders
   const filteredOrders = useMemo(() => {
@@ -162,20 +176,47 @@ const Index = () => {
     setDeleteDialogOpen(true);
   };
 
+  // Product handlers
+  const handleAddProduct = async (productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
+    await addProduct(productData);
+  };
+
+  const handleEditProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setEditProductOpen(true);
+  };
+
+  const handleSaveProduct = async (updatedProduct: Product) => {
+    await updateProduct(updatedProduct);
+  };
+
+  const handleDeleteProduct = (product: Product) => {
+    setItemToDelete(product);
+    setDeleteType('product');
+    setDeleteDialogOpen(true);
+  };
+
   // Confirm delete
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
 
-    switch (deleteType) {
-      case 'client':
-        await deleteClient((itemToDelete as Client).id);
-        break;
-      case 'supplier':
-        await deleteSupplier((itemToDelete as Supplier).id);
-        break;
-      case 'order':
-        await deleteOrder((itemToDelete as Order).id);
-        break;
+    try {
+      switch (deleteType) {
+        case 'client':
+          await deleteClient((itemToDelete as Client).id);
+          break;
+        case 'supplier':
+          await deleteSupplier((itemToDelete as Supplier).id);
+          break;
+        case 'order':
+          await deleteOrder((itemToDelete as Order).id);
+          break;
+        case 'product':
+          await deleteProduct((itemToDelete as Product).id);
+          break;
+      }
+    } catch (error) {
+      // Error is already handled in the hooks
     }
 
     setDeleteDialogOpen(false);
@@ -199,14 +240,39 @@ const Index = () => {
           title: 'Excluir Pedido',
           description: `Tem certeza que deseja excluir o pedido de "${(itemToDelete as Order)?.customerName}"? Esta ação não pode ser desfeita.`,
         };
+      case 'product':
+        return {
+          title: 'Excluir Produto',
+          description: `Tem certeza que deseja excluir "${(itemToDelete as Product)?.name}"? Esta ação não pode ser desfeita.`,
+        };
     }
+  };
+
+  const handleNotificationsClick = () => {
+    setActiveTab('orders');
+    clearNotifications();
+    refetchOrders();
+  };
+
+  const handleSettingsClick = () => {
+    toast({
+      title: 'Configurações',
+      description: 'Página de configurações em desenvolvimento.',
+    });
   };
 
   const { title, subtitle } = pageConfig[activeTab] || pageConfig.dashboard;
   const channelStats = getChannelStats();
   const deleteContent = getDeleteDialogContent();
 
-  const isLoading = clientsLoading || suppliersLoading || ordersLoading;
+  const isLoading = clientsLoading || suppliersLoading || ordersLoading || productsLoading;
+
+  const handleTabChange = (tab: string) => {
+    if (tab === 'orders' && newOrdersCount > 0) {
+      clearNotifications();
+    }
+    setActiveTab(tab);
+  };
 
   const renderContent = () => {
     if (isLoading) {
@@ -271,7 +337,7 @@ const Index = () => {
                     icon={channel.icon}
                     orders={channel.totalOrders}
                     revenue={channel.totalRevenue}
-                    onClick={() => setActiveTab(channel.id)}
+                    onClick={() => handleTabChange(channel.id)}
                     delay={400 + index * 100}
                   />
                 ))}
@@ -311,6 +377,26 @@ const Index = () => {
               orders={filteredOrders} 
               onEdit={handleEditOrder}
               onDelete={handleDeleteOrder}
+            />
+          </div>
+        );
+
+      case 'products':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-end">
+              <Button 
+                className="gap-2 bg-primary hover:bg-primary/90"
+                onClick={() => setAddProductOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Novo Produto
+              </Button>
+            </div>
+            <ProductsTable 
+              products={products} 
+              onEdit={handleEditProduct}
+              onDelete={handleDeleteProduct}
             />
           </div>
         );
@@ -411,10 +497,20 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <Sidebar 
+        activeTab={activeTab} 
+        onTabChange={handleTabChange}
+        newOrdersCount={newOrdersCount}
+        onSettingsClick={handleSettingsClick}
+      />
       
       <main className="ml-64">
-        <Header title={title} subtitle={subtitle}>
+        <Header 
+          title={title} 
+          subtitle={subtitle}
+          newOrdersCount={newOrdersCount}
+          onNotificationsClick={handleNotificationsClick}
+        >
           <Button 
             variant="ghost" 
             size="sm" 
@@ -472,6 +568,19 @@ const Index = () => {
         clients={clients}
         suppliers={effectiveSuppliers}
         onSave={handleSaveOrder}
+      />
+
+      {/* Product Dialogs */}
+      <AddProductDialog
+        open={addProductOpen}
+        onOpenChange={setAddProductOpen}
+        onAdd={handleAddProduct}
+      />
+      <EditProductDialog
+        open={editProductOpen}
+        onOpenChange={setEditProductOpen}
+        product={selectedProduct}
+        onSave={handleSaveProduct}
       />
 
       {/* Delete Confirmation */}

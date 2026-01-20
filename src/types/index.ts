@@ -46,3 +46,19 @@ export interface SalesChannel {
   totalOrders: number;
   totalRevenue: number;
 }
+
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  collection?: string;
+  price: number;
+  originalPrice?: number;
+  supplierCost: number;
+  imageUrl?: string;
+  stock: number;
+  sizes: string[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
