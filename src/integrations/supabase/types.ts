@@ -109,6 +109,54 @@ export type Database = {
           },
         ]
       }
+      products: {
+        Row: {
+          collection: string | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          original_price: number | null
+          price: number
+          sizes: string[]
+          stock: number
+          supplier_cost: number
+          updated_at: string
+        }
+        Insert: {
+          collection?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          original_price?: number | null
+          price?: number
+          sizes?: string[]
+          stock?: number
+          supplier_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          collection?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          original_price?: number | null
+          price?: number
+          sizes?: string[]
+          stock?: number
+          supplier_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string

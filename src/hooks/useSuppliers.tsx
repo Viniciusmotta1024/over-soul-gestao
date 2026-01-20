@@ -137,6 +137,15 @@ export function useSuppliers() {
 
   const deleteSupplier = async (supplierId: string) => {
     try {
+      // First delete supplier products
+      const { error: productsError } = await supabase
+        .from('supplier_products')
+        .delete()
+        .eq('supplier_id', supplierId);
+
+      if (productsError) throw productsError;
+
+      // Then delete the supplier
       const { error } = await supabase
         .from('suppliers')
         .delete()
