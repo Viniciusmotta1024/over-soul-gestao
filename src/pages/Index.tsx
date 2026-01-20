@@ -6,15 +6,20 @@ import { ChannelCard } from '@/components/dashboard/ChannelCard';
 import { RecentOrders } from '@/components/dashboard/RecentOrders';
 import { OrdersTable } from '@/components/orders/OrdersTable';
 import { SuppliersTable } from '@/components/suppliers/SuppliersTable';
+import { ClientsTable } from '@/components/clients/ClientsTable';
 import { ReportsView } from '@/components/reports/ReportsView';
-import { mockOrders, mockSuppliers, salesChannels } from '@/data/mockData';
+import { AddClientDialog } from '@/components/clients/AddClientDialog';
+import { AddSupplierDialog } from '@/components/suppliers/AddSupplierDialog';
+import { mockOrders, mockSuppliers, mockClients, salesChannels } from '@/data/mockData';
 import { Package, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Plus, Filter, Download } from 'lucide-react';
+import { Order, Client, Supplier } from '@/types';
 
 const pageConfig: Record<string, { title: string; subtitle: string }> = {
   dashboard: { title: 'Dashboard', subtitle: 'Visão geral dos seus pedidos e vendas' },
   orders: { title: 'Pedidos', subtitle: 'Gerenciar todos os pedidos' },
+  clients: { title: 'Clientes', subtitle: 'Gerenciar clientes e empresas' },
   suppliers: { title: 'Fornecedores', subtitle: 'Valores e produtos dos fornecedores' },
   shopee: { title: 'Shopee', subtitle: 'Pedidos do marketplace Shopee' },
   ministerio: { title: 'Vista o seu Ministério', subtitle: 'Encomendas para igrejas e eventos' },
@@ -23,12 +28,26 @@ const pageConfig: Record<string, { title: string; subtitle: string }> = {
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [clients, setClients] = useState<Client[]>(mockClients);
+  const [suppliers, setSuppliers] = useState<Supplier[]>(mockSuppliers);
+  const [addClientOpen, setAddClientOpen] = useState(false);
+  const [addSupplierOpen, setAddSupplierOpen] = useState(false);
 
-  // Calculate stats
-  const totalOrders = mockOrders.length;
-  const totalRevenue = mockOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
-  const totalProfit = mockOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
-  const pendingOrders = mockOrders.filter(o => o.status === 'pending' || o.status === 'processing').length;
+  // Calculate stats from actual data
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
+  const totalProfit = orders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
+  const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing').length;
+
+  // Calculate channel stats from actual orders
+  const getChannelStats = () => {
+    return salesChannels.map(channel => ({
+      ...channel,
+      totalOrders: orders.filter(o => o.channel === channel.id).length,
+      totalRevenue: orders.filter(o => o.channel === channel.id).reduce((acc, o) => acc + o.salePrice * o.quantity, 0),
+    }));
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -37,7 +56,27 @@ const Index = () => {
     }).format(value);
   };
 
+  const handleAddClient = (clientData: Omit<Client, 'id' | 'orders' | 'totalSpent' | 'createdAt'>) => {
+    const newClient: Client = {
+      ...clientData,
+      id: String(clients.length + 1),
+      orders: 0,
+      totalSpent: 0,
+      createdAt: new Date(),
+    };
+    setClients([...clients, newClient]);
+  };
+
+  const handleAddSupplier = (supplierData: Omit<Supplier, 'id'>) => {
+    const newSupplier: Supplier = {
+      ...supplierData,
+      id: String(suppliers.length + 1),
+    };
+    setSuppliers([...suppliers, newSupplier]);
+  };
+
   const { title, subtitle } = pageConfig[activeTab] || pageConfig.dashboard;
+  const channelStats = getChannelStats();
 
   const renderContent = () => {
     switch (activeTab) {
@@ -80,9 +119,9 @@ const Index = () => {
 
             {/* Channels */}
             <div>
-              <h2 className="text-lg font-semibold text-foreground mb-4">Canais de Venda</h2>
+              <h2 className="text-lg font-serif font-semibold text-foreground mb-4">Canais de Venda</h2>
               <div className="grid gap-4 md:grid-cols-3">
-                {salesChannels.map((channel, index) => (
+                {channelStats.map((channel, index) => (
                   <ChannelCard
                     key={channel.id}
                     name={channel.name}
@@ -97,7 +136,7 @@ const Index = () => {
             </div>
 
             {/* Recent Orders */}
-            <RecentOrders orders={mockOrders} />
+            <RecentOrders orders={orders} />
           </div>
         );
 
@@ -120,7 +159,28 @@ const Index = () => {
                 Novo Pedido
               </Button>
             </div>
-            <OrdersTable orders={mockOrders} />
+            <OrdersTable orders={orders} />
+          </div>
+        );
+
+      case 'clients':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-end">
+              <Button 
+                className="gap-2 bg-primary hover:bg-primary/90"
+                onClick={() => setAddClientOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+                Novo Cliente
+              </Button>
+            </div>
+            <ClientsTable clients={clients} />
+            <AddClientDialog 
+              open={addClientOpen} 
+              onOpenChange={setAddClientOpen}
+              onAdd={handleAddClient}
+            />
           </div>
         );
 
@@ -128,12 +188,20 @@ const Index = () => {
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-end">
-              <Button className="gap-2 bg-primary hover:bg-primary/90">
+              <Button 
+                className="gap-2 bg-primary hover:bg-primary/90"
+                onClick={() => setAddSupplierOpen(true)}
+              >
                 <Plus className="h-4 w-4" />
                 Novo Fornecedor
               </Button>
             </div>
-            <SuppliersTable suppliers={mockSuppliers} />
+            <SuppliersTable suppliers={suppliers} />
+            <AddSupplierDialog
+              open={addSupplierOpen}
+              onOpenChange={setAddSupplierOpen}
+              onAdd={handleAddSupplier}
+            />
           </div>
         );
 
@@ -141,17 +209,17 @@ const Index = () => {
         return (
           <div className="space-y-6">
             <div className="glass rounded-xl p-6 animate-fade-in">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/20 text-3xl">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-3xl">
                   🛒
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">Vendas Shopee</h2>
+                  <h2 className="text-xl font-serif font-semibold text-foreground">Vendas Shopee</h2>
                   <p className="text-muted-foreground">Gerencie seus pedidos do marketplace</p>
                 </div>
               </div>
             </div>
-            <OrdersTable orders={mockOrders} filterChannel="shopee" />
+            <OrdersTable orders={orders} filterChannel="shopee" />
           </div>
         );
 
@@ -159,22 +227,22 @@ const Index = () => {
         return (
           <div className="space-y-6">
             <div className="glass rounded-xl p-6 animate-fade-in">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/20 text-3xl">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-3xl">
                   ⛪
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">Vista o seu Ministério</h2>
+                  <h2 className="text-xl font-serif font-semibold text-foreground">Vista o seu Ministério</h2>
                   <p className="text-muted-foreground">Encomendas para igrejas e eventos religiosos</p>
                 </div>
               </div>
             </div>
-            <OrdersTable orders={mockOrders} filterChannel="ministerio" />
+            <OrdersTable orders={orders} filterChannel="ministerio" />
           </div>
         );
 
       case 'reports':
-        return <ReportsView orders={mockOrders} />;
+        return <ReportsView orders={orders} />;
 
       default:
         return null;
@@ -183,12 +251,6 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Background gradient */}
-      <div 
-        className="fixed inset-0 pointer-events-none"
-        style={{ background: 'var(--gradient-glow)' }}
-      />
-      
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       
       <main className="ml-64">

@@ -8,7 +8,7 @@ interface ReportsViewProps {
   orders: Order[];
 }
 
-const COLORS = ['hsl(160, 84%, 39%)', 'hsl(38, 92%, 50%)', 'hsl(199, 89%, 48%)'];
+const COLORS = ['hsl(75, 20%, 35%)', 'hsl(38, 92%, 50%)', 'hsl(199, 89%, 48%)'];
 
 export function ReportsView({ orders }: ReportsViewProps) {
   // Calculate statistics
@@ -77,22 +77,22 @@ export function ReportsView({ orders }: ReportsViewProps) {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Revenue by Channel */}
         <div className="glass rounded-xl p-6 animate-fade-in" style={{ animationDelay: '400ms' }}>
-          <h3 className="text-lg font-semibold text-foreground mb-6">Faturamento por Canal</h3>
+          <h3 className="text-lg font-serif font-semibold text-foreground mb-6">Faturamento por Canal</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={channelData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(222, 30%, 18%)" />
-                <XAxis dataKey="name" stroke="hsl(215, 20%, 55%)" fontSize={12} />
-                <YAxis stroke="hsl(215, 20%, 55%)" fontSize={12} tickFormatter={(v) => `R$${v/1000}k`} />
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(40, 15%, 88%)" />
+                <XAxis dataKey="name" stroke="hsl(30, 10%, 45%)" fontSize={12} />
+                <YAxis stroke="hsl(30, 10%, 45%)" fontSize={12} tickFormatter={(v) => `R$${v/1000}k`} />
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: 'hsl(222, 47%, 8%)', 
-                    border: '1px solid hsl(222, 30%, 18%)',
+                    backgroundColor: 'hsl(0, 0%, 100%)', 
+                    border: '1px solid hsl(40, 15%, 88%)',
                     borderRadius: '8px'
                   }}
                   formatter={(value: number) => [formatCurrency(value), 'Faturamento']}
                 />
-                <Bar dataKey="revenue" fill="hsl(160, 84%, 39%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="revenue" fill="hsl(75, 20%, 35%)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -100,7 +100,7 @@ export function ReportsView({ orders }: ReportsViewProps) {
 
         {/* Orders by Status */}
         <div className="glass rounded-xl p-6 animate-fade-in" style={{ animationDelay: '500ms' }}>
-          <h3 className="text-lg font-semibold text-foreground mb-6">Pedidos por Status</h3>
+          <h3 className="text-lg font-serif font-semibold text-foreground mb-6">Pedidos por Status</h3>
           <div className="h-[300px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -121,8 +121,8 @@ export function ReportsView({ orders }: ReportsViewProps) {
                 </Pie>
                 <Tooltip 
                   contentStyle={{ 
-                    backgroundColor: 'hsl(222, 47%, 8%)', 
-                    border: '1px solid hsl(222, 30%, 18%)',
+                    backgroundColor: 'hsl(0, 0%, 100%)', 
+                    border: '1px solid hsl(40, 15%, 88%)',
                     borderRadius: '8px'
                   }}
                 />
@@ -134,7 +134,7 @@ export function ReportsView({ orders }: ReportsViewProps) {
 
       {/* Purchase Summary for Suppliers */}
       <div className="glass rounded-xl p-6 animate-fade-in" style={{ animationDelay: '600ms' }}>
-        <h3 className="text-lg font-semibold text-foreground mb-6">Resumo para Compra com Fornecedores</h3>
+        <h3 className="text-lg font-serif font-semibold text-foreground mb-6">Resumo para Compra com Fornecedores</h3>
         <p className="text-sm text-muted-foreground mb-4">
           Quantidade total de produtos pendentes de compra baseado nos pedidos em processamento:
         </p>
@@ -152,15 +152,15 @@ export function ReportsView({ orders }: ReportsViewProps) {
               }
               return acc;
             }, [] as { key: string; product: string; size: string; quantity: number }[])
-            .map((item, index) => (
+            .map((item) => (
               <div 
                 key={item.key}
-                className="p-4 rounded-lg bg-secondary/30 border border-border/50"
+                className="p-4 rounded-lg bg-secondary/50 border border-border"
               >
                 <p className="font-medium text-foreground">{item.product}</p>
                 <div className="flex justify-between items-center mt-2">
                   <span className="text-sm text-muted-foreground">Tamanho: {item.size}</span>
-                  <span className="text-lg font-bold text-primary">{item.quantity} un</span>
+                  <span className="text-lg font-serif font-semibold text-primary">{item.quantity} un</span>
                 </div>
               </div>
             ))}

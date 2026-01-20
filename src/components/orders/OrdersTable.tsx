@@ -18,10 +18,10 @@ interface OrdersTableProps {
 }
 
 const statusConfig = {
-  pending: { label: 'Pendente', className: 'bg-warning/20 text-warning border-warning/30' },
-  processing: { label: 'Processando', className: 'bg-info/20 text-info border-info/30' },
-  completed: { label: 'Concluído', className: 'bg-success/20 text-success border-success/30' },
-  cancelled: { label: 'Cancelado', className: 'bg-destructive/20 text-destructive border-destructive/30' },
+  pending: { label: 'Pendente', className: 'bg-warning/10 text-warning border-warning/30' },
+  processing: { label: 'Processando', className: 'bg-info/10 text-info border-info/30' },
+  completed: { label: 'Concluído', className: 'bg-success/10 text-success border-success/30' },
+  cancelled: { label: 'Cancelado', className: 'bg-destructive/10 text-destructive border-destructive/30' },
 };
 
 const channelConfig = {
@@ -103,14 +103,14 @@ export function OrdersTable({ orders, filterChannel }: OrdersTableProps) {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                      <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Edit className="h-4 w-4 text-muted-foreground" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                      <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </TableCell>
