@@ -6,19 +6,20 @@ import {
   ShoppingBag, 
   Church, 
   BarChart3,
-  Settings,
   Users,
   ShoppingCart,
   Calculator,
   UsersRound
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { SettingsMenu } from '@/components/settings/SettingsMenu';
 
 interface SidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   newOrdersCount?: number;
-  onSettingsClick?: () => void;
+  onActivityLogsClick: () => void;
+  onPasswordRecoveryClick: () => void;
   isAdmin?: boolean;
 }
 
@@ -38,7 +39,7 @@ const adminItems = [
   { id: 'team', label: 'Equipe', icon: UsersRound },
 ];
 
-export function Sidebar({ activeTab, onTabChange, newOrdersCount = 0, onSettingsClick, isAdmin = false }: SidebarProps) {
+export function Sidebar({ activeTab, onTabChange, newOrdersCount = 0, onActivityLogsClick, onPasswordRecoveryClick, isAdmin = false }: SidebarProps) {
   const allItems = isAdmin ? [...menuItems, ...adminItems] : menuItems;
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-card border-r border-border">
@@ -93,13 +94,11 @@ export function Sidebar({ activeTab, onTabChange, newOrdersCount = 0, onSettings
 
         {/* Settings */}
         <div className="border-t border-border p-3">
-          <button 
-            onClick={onSettingsClick}
-            className="w-full flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-secondary hover:text-foreground"
-          >
-            <Settings className="h-5 w-5" />
-            Configurações
-          </button>
+          <SettingsMenu 
+            onActivityLogsClick={onActivityLogsClick}
+            onPasswordRecoveryClick={onPasswordRecoveryClick}
+            isAdmin={isAdmin}
+          />
         </div>
       </div>
     </aside>
