@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { activityLogger } from '@/services/activityLogger';
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -84,6 +85,13 @@ export function useProducts() {
 
       setProducts(prev => [newProduct, ...prev]);
       toast({ title: 'Produto adicionado', description: `${newProduct.name} foi adicionado com sucesso.` });
+      
+      // Log activity
+      activityLogger.log('create', 'product', newProduct.id, newProduct.name, {
+        collection: newProduct.collection,
+        price: newProduct.price,
+      });
+      
       return newProduct;
     } catch (error) {
       console.error('Error adding product:', error);
@@ -114,6 +122,9 @@ export function useProducts() {
 
       setProducts(prev => prev.map(p => p.id === product.id ? product : p));
       toast({ title: 'Produto atualizado', description: `${product.name} foi atualizado com sucesso.` });
+      
+      // Log activity
+      activityLogger.log('update', 'product', product.id, product.name);
     } catch (error) {
       console.error('Error updating product:', error);
       toast({ title: 'Erro', description: 'Erro ao atualizar produto', variant: 'destructive' });
@@ -122,6 +133,7 @@ export function useProducts() {
   };
 
   const deleteProduct = async (productId: string) => {
+    const product = products.find(p => p.id === productId);
     try {
       const { error } = await supabase
         .from('products')
@@ -132,6 +144,9 @@ export function useProducts() {
 
       setProducts(prev => prev.filter(p => p.id !== productId));
       toast({ title: 'Produto excluído', description: 'Produto removido com sucesso.' });
+      
+      // Log activity
+      activityLogger.log('delete', 'product', productId, product?.name);
     } catch (error) {
       console.error('Error deleting product:', error);
       toast({ title: 'Erro', description: 'Erro ao excluir produto', variant: 'destructive' });
@@ -145,7 +160,6 @@ export function useProducts() {
 
   const updateProductsOrder = async (reorderedProducts: Product[]) => {
     try {
-      // Update sort_order for each product in the batch
       const updates = reorderedProducts.map((product, index) => ({
         id: product.id,
         sort_order: index + 1,
@@ -160,14 +174,11 @@ export function useProducts() {
         if (error) throw error;
       }
 
-      // Refetch to get updated order from database
       await fetchProducts();
-
       toast({ title: 'Ordem atualizada', description: 'A ordem dos produtos foi salva.' });
     } catch (error) {
       console.error('Error updating products order:', error);
       toast({ title: 'Erro', description: 'Erro ao salvar ordem dos produtos', variant: 'destructive' });
-      // Refetch to restore correct order
       fetchProducts();
     }
   };

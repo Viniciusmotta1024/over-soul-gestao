@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Supplier, SupplierProduct } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { activityLogger } from '@/services/activityLogger';
 
 export function useSuppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -86,6 +87,10 @@ export function useSuppliers() {
 
       setSuppliers(prev => [newSupplier, ...prev]);
       toast({ title: 'Fornecedor adicionado', description: `${newSupplier.name} foi adicionado com sucesso.` });
+      
+      // Log activity
+      activityLogger.log('create', 'supplier', newSupplier.id, newSupplier.name);
+      
       return newSupplier;
     } catch (error) {
       console.error('Error adding supplier:', error);
@@ -128,6 +133,9 @@ export function useSuppliers() {
 
       setSuppliers(prev => prev.map(s => s.id === supplier.id ? supplier : s));
       toast({ title: 'Fornecedor atualizado', description: `${supplier.name} foi atualizado com sucesso.` });
+      
+      // Log activity
+      activityLogger.log('update', 'supplier', supplier.id, supplier.name);
     } catch (error) {
       console.error('Error updating supplier:', error);
       toast({ title: 'Erro', description: 'Erro ao atualizar fornecedor', variant: 'destructive' });
@@ -136,6 +144,7 @@ export function useSuppliers() {
   };
 
   const deleteSupplier = async (supplierId: string) => {
+    const supplier = suppliers.find(s => s.id === supplierId);
     try {
       // First delete supplier products
       const { error: productsError } = await supabase
@@ -155,6 +164,9 @@ export function useSuppliers() {
 
       setSuppliers(prev => prev.filter(s => s.id !== supplierId));
       toast({ title: 'Fornecedor excluído', description: 'Fornecedor removido com sucesso.' });
+      
+      // Log activity
+      activityLogger.log('delete', 'supplier', supplierId, supplier?.name);
     } catch (error) {
       console.error('Error deleting supplier:', error);
       toast({ title: 'Erro', description: 'Erro ao excluir fornecedor', variant: 'destructive' });
