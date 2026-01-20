@@ -36,7 +36,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { createPortal } from 'react-dom';
+
 
 interface ProductsTableProps {
   products: Product[];
@@ -324,14 +324,11 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
           ))}
         </div>
       </SortableContext>
-      {createPortal(
-        <DragOverlay dropAnimation={dropAnimationConfig}>
-          {activeProduct ? (
-            <DragOverlayCard product={activeProduct} formatCurrency={formatCurrency} />
-          ) : null}
-        </DragOverlay>,
-        document.body
-      )}
+      <DragOverlay dropAnimation={dropAnimationConfig}>
+        {activeProduct ? (
+          <DragOverlayCard product={activeProduct} formatCurrency={formatCurrency} />
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 
@@ -370,14 +367,11 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
           </TableBody>
         </Table>
       </SortableContext>
-      {createPortal(
-        <DragOverlay dropAnimation={dropAnimationConfig}>
-          {activeProduct ? (
-            <DragOverlayCard product={activeProduct} formatCurrency={formatCurrency} />
-          ) : null}
-        </DragOverlay>,
-        document.body
-      )}
+      <DragOverlay dropAnimation={dropAnimationConfig}>
+        {activeProduct ? (
+          <DragOverlayCard product={activeProduct} formatCurrency={formatCurrency} />
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 
