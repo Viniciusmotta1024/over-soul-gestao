@@ -1,6 +1,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { activityLogger } from '@/services/activityLogger';
 
 interface AuthContextType {
   user: User | null;
@@ -25,6 +26,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Update activity logger with user info
+        if (session?.user) {
+          // Defer the profile fetch to avoid blocking
+          setTimeout(async () => {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('name')
+              .eq('user_id', session.user.id)
+              .maybeSingle();
+            
+            activityLogger.setUser(session.user.id, profile?.name || session.user.email || null);
+          }, 0);
+        } else {
+          activityLogger.setUser(null, null);
+        }
       }
     );
 
@@ -33,6 +50,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+
+      // Update activity logger
+      if (session?.user) {
+        setTimeout(async () => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          activityLogger.setUser(session.user.id, profile?.name || session.user.email || null);
+        }, 0);
+      }
     });
 
     return () => subscription.unsubscribe();

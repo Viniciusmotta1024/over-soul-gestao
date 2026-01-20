@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Order } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { activityLogger } from '@/services/activityLogger';
 
 export function useOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -95,6 +96,14 @@ export function useOrders() {
 
       setOrders(prev => [newOrder, ...prev]);
       toast({ title: 'Pedido criado', description: `Pedido para ${newOrder.customerName} foi criado com sucesso.` });
+      
+      // Log activity
+      activityLogger.log('create', 'order', newOrder.id, `${newOrder.product} - ${newOrder.customerName}`, {
+        product: newOrder.product,
+        customer: newOrder.customerName,
+        channel: newOrder.channel,
+      });
+      
       return newOrder;
     } catch (error) {
       console.error('Error adding order:', error);
@@ -104,6 +113,9 @@ export function useOrders() {
   };
 
   const updateOrder = async (order: Order) => {
+    const previousOrder = orders.find(o => o.id === order.id);
+    const statusChanged = previousOrder && previousOrder.status !== order.status;
+    
     try {
       const { error } = await supabase
         .from('orders')
@@ -124,6 +136,16 @@ export function useOrders() {
 
       setOrders(prev => prev.map(o => o.id === order.id ? order : o));
       toast({ title: 'Pedido atualizado', description: 'Pedido atualizado com sucesso.' });
+      
+      // Log activity
+      if (statusChanged) {
+        activityLogger.log('status_change', 'order', order.id, `${order.product} - ${order.customerName}`, {
+          previousStatus: previousOrder?.status,
+          newStatus: order.status,
+        });
+      } else {
+        activityLogger.log('update', 'order', order.id, `${order.product} - ${order.customerName}`);
+      }
     } catch (error) {
       console.error('Error updating order:', error);
       toast({ title: 'Erro', description: 'Erro ao atualizar pedido', variant: 'destructive' });
@@ -132,6 +154,7 @@ export function useOrders() {
   };
 
   const deleteOrder = async (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
     try {
       const { error } = await supabase
         .from('orders')
@@ -142,6 +165,9 @@ export function useOrders() {
 
       setOrders(prev => prev.filter(o => o.id !== orderId));
       toast({ title: 'Pedido excluído', description: 'Pedido removido com sucesso.' });
+      
+      // Log activity
+      activityLogger.log('delete', 'order', orderId, order ? `${order.product} - ${order.customerName}` : undefined);
     } catch (error) {
       console.error('Error deleting order:', error);
       toast({ title: 'Erro', description: 'Erro ao excluir pedido', variant: 'destructive' });

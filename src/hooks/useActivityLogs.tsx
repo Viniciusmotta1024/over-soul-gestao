@@ -15,6 +15,13 @@ export interface ActivityLog {
   createdAt: Date;
 }
 
+export interface ActivityLogFilters {
+  entityType?: string;
+  action?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
 type EntityType = 'order' | 'client' | 'supplier' | 'product' | 'team' | 'auth';
 type ActionType = 'create' | 'update' | 'delete' | 'login' | 'logout' | 'status_change';
 
@@ -22,14 +29,33 @@ export function useActivityLogs() {
   const { user } = useAuth();
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<ActivityLogFilters>({});
 
-  const fetchLogs = useCallback(async (limit = 100) => {
+  const fetchLogs = useCallback(async (limit = 200) => {
+    setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('activity_logs')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(limit);
+
+      if (filters.entityType) {
+        query = query.eq('entity_type', filters.entityType);
+      }
+      if (filters.action) {
+        query = query.eq('action', filters.action);
+      }
+      if (filters.dateFrom) {
+        query = query.gte('created_at', filters.dateFrom.toISOString());
+      }
+      if (filters.dateTo) {
+        const endOfDay = new Date(filters.dateTo);
+        endOfDay.setHours(23, 59, 59, 999);
+        query = query.lte('created_at', endOfDay.toISOString());
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
 
@@ -49,7 +75,7 @@ export function useActivityLogs() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters]);
 
   useEffect(() => {
     fetchLogs();
@@ -65,14 +91,13 @@ export function useActivityLogs() {
     if (!user) return;
 
     try {
-      // Get user name from profile
       const { data: profile } = await supabase
         .from('profiles')
         .select('name')
         .eq('user_id', user.id)
         .maybeSingle();
 
-      const { error } = await supabase
+      await supabase
         .from('activity_logs')
         .insert([{
           user_id: user.id,
@@ -83,8 +108,6 @@ export function useActivityLogs() {
           entity_name: entityName || null,
           details: (details as Json) || null,
         }]);
-
-      if (error) throw error;
     } catch (error) {
       console.error('Error logging activity:', error);
     }
@@ -93,6 +116,8 @@ export function useActivityLogs() {
   return {
     logs,
     loading,
+    filters,
+    setFilters,
     logActivity,
     refetch: fetchLogs,
   };

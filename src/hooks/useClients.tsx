@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Client } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import { activityLogger } from '@/services/activityLogger';
 
 export function useClients() {
   const [clients, setClients] = useState<Client[]>([]);
@@ -71,6 +72,10 @@ export function useClients() {
 
       setClients(prev => [newClient, ...prev]);
       toast({ title: 'Cliente adicionado', description: `${newClient.name} foi adicionado com sucesso.` });
+      
+      // Log activity
+      activityLogger.log('create', 'client', newClient.id, newClient.name);
+      
       return newClient;
     } catch (error) {
       console.error('Error adding client:', error);
@@ -97,6 +102,9 @@ export function useClients() {
 
       setClients(prev => prev.map(c => c.id === client.id ? client : c));
       toast({ title: 'Cliente atualizado', description: `${client.name} foi atualizado com sucesso.` });
+      
+      // Log activity
+      activityLogger.log('update', 'client', client.id, client.name);
     } catch (error) {
       console.error('Error updating client:', error);
       toast({ title: 'Erro', description: 'Erro ao atualizar cliente', variant: 'destructive' });
@@ -105,6 +113,7 @@ export function useClients() {
   };
 
   const deleteClient = async (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
     try {
       const { error } = await supabase
         .from('clients')
@@ -115,6 +124,9 @@ export function useClients() {
 
       setClients(prev => prev.filter(c => c.id !== clientId));
       toast({ title: 'Cliente excluído', description: 'Cliente removido com sucesso.' });
+      
+      // Log activity
+      activityLogger.log('delete', 'client', clientId, client?.name);
     } catch (error) {
       console.error('Error deleting client:', error);
       toast({ title: 'Erro', description: 'Erro ao excluir cliente', variant: 'destructive' });
