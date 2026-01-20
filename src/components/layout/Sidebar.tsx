@@ -20,6 +20,7 @@ interface SidebarProps {
   newOrdersCount?: number;
   onActivityLogsClick: () => void;
   onPasswordRecoveryClick: () => void;
+  onTeamClick: () => void;
   isAdmin?: boolean;
 }
 
@@ -35,12 +36,9 @@ const menuItems = [
   { id: 'reports', label: 'Relatórios', icon: BarChart3 },
 ];
 
-const adminItems = [
-  { id: 'team', label: 'Equipe', icon: UsersRound },
-];
+// Team is now inside Settings menu
 
-export function Sidebar({ activeTab, onTabChange, newOrdersCount = 0, onActivityLogsClick, onPasswordRecoveryClick, isAdmin = false }: SidebarProps) {
-  const allItems = isAdmin ? [...menuItems, ...adminItems] : menuItems;
+export function Sidebar({ activeTab, onTabChange, newOrdersCount = 0, onActivityLogsClick, onPasswordRecoveryClick, onTeamClick, isAdmin = false }: SidebarProps) {
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-card border-r border-border">
       <div className="flex h-full flex-col">
@@ -57,7 +55,7 @@ export function Sidebar({ activeTab, onTabChange, newOrdersCount = 0, onActivity
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3">
-          {allItems.map((item, index) => {
+          {menuItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             const showBadge = item.id === 'orders' && newOrdersCount > 0;
@@ -97,6 +95,7 @@ export function Sidebar({ activeTab, onTabChange, newOrdersCount = 0, onActivity
           <SettingsMenu 
             onActivityLogsClick={onActivityLogsClick}
             onPasswordRecoveryClick={onPasswordRecoveryClick}
+            onTeamClick={onTeamClick}
             isAdmin={isAdmin}
           />
         </div>

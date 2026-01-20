@@ -403,6 +403,10 @@ const Index = () => {
     setPasswordRecoveryOpen(true);
   };
 
+  const handleTeamClick = () => {
+    setActiveTab('team');
+  };
+
   const { title, subtitle } = pageConfig[activeTab] || pageConfig.dashboard;
   const channelStats = getChannelStats();
   const deleteContent = getDeleteDialogContent();
@@ -690,6 +694,7 @@ const Index = () => {
         newOrdersCount={newOrdersCount}
         onActivityLogsClick={handleActivityLogsClick}
         onPasswordRecoveryClick={handlePasswordRecoveryClick}
+        onTeamClick={handleTeamClick}
         isAdmin={isAdmin}
       />
       
