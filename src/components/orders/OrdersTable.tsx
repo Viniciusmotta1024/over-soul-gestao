@@ -1,4 +1,4 @@
-import { Order } from '@/types';
+import { Order, Client, Supplier } from '@/types';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -15,6 +15,8 @@ import { Eye, Edit, Trash2 } from 'lucide-react';
 interface OrdersTableProps {
   orders: Order[];
   filterChannel?: string;
+  onEdit: (order: Order) => void;
+  onDelete: (order: Order) => void;
 }
 
 const statusConfig = {
@@ -30,7 +32,7 @@ const channelConfig = {
   site: { label: 'Site', icon: '🌐' },
 };
 
-export function OrdersTable({ orders, filterChannel }: OrdersTableProps) {
+export function OrdersTable({ orders, filterChannel, onEdit, onDelete }: OrdersTableProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -106,10 +108,20 @@ export function OrdersTable({ orders, filterChannel }: OrdersTableProps) {
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                      onClick={() => onEdit(order)}
+                    >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 text-destructive hover:text-destructive"
+                      onClick={() => onDelete(order)}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>

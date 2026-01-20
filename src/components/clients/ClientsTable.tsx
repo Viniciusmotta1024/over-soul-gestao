@@ -13,9 +13,11 @@ import { Eye, Edit, Trash2, Mail, Phone } from 'lucide-react';
 
 interface ClientsTableProps {
   clients: Client[];
+  onEdit: (client: Client) => void;
+  onDelete: (client: Client) => void;
 }
 
-export function ClientsTable({ clients }: ClientsTableProps) {
+export function ClientsTable({ clients, onEdit, onDelete }: ClientsTableProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -81,10 +83,20 @@ export function ClientsTable({ clients }: ClientsTableProps) {
                   <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={() => onEdit(client)}
+                  >
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => onDelete(client)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
