@@ -9,7 +9,8 @@ import {
   Settings,
   Users,
   ShoppingCart,
-  Calculator
+  Calculator,
+  UsersRound
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -18,6 +19,7 @@ interface SidebarProps {
   onTabChange: (tab: string) => void;
   newOrdersCount?: number;
   onSettingsClick?: () => void;
+  isAdmin?: boolean;
 }
 
 const menuItems = [
@@ -32,7 +34,12 @@ const menuItems = [
   { id: 'reports', label: 'Relatórios', icon: BarChart3 },
 ];
 
-export function Sidebar({ activeTab, onTabChange, newOrdersCount = 0, onSettingsClick }: SidebarProps) {
+const adminItems = [
+  { id: 'team', label: 'Equipe', icon: UsersRound },
+];
+
+export function Sidebar({ activeTab, onTabChange, newOrdersCount = 0, onSettingsClick, isAdmin = false }: SidebarProps) {
+  const allItems = isAdmin ? [...menuItems, ...adminItems] : menuItems;
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-card border-r border-border">
       <div className="flex h-full flex-col">
@@ -49,7 +56,7 @@ export function Sidebar({ activeTab, onTabChange, newOrdersCount = 0, onSettings
 
         {/* Navigation */}
         <nav className="flex-1 space-y-1 px-3">
-          {menuItems.map((item, index) => {
+          {allItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             const showBadge = item.id === 'orders' && newOrdersCount > 0;

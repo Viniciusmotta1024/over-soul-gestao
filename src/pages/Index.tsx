@@ -12,6 +12,8 @@ import { ClientsTable } from '@/components/clients/ClientsTable';
 import { ProductsTable } from '@/components/products/ProductsTable';
 import { ReportsView } from '@/components/reports/ReportsView';
 import { PricingCalculator } from '@/components/pricing/PricingCalculator';
+import { TeamTable } from '@/components/team/TeamTable';
+import { AddTeamMemberDialog } from '@/components/team/AddTeamMemberDialog';
 import { AddClientDialog } from '@/components/clients/AddClientDialog';
 import { EditClientDialog } from '@/components/clients/EditClientDialog';
 import { AddSupplierDialog } from '@/components/suppliers/AddSupplierDialog';
@@ -24,7 +26,7 @@ import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 import { salesChannels, mockSuppliers } from '@/data/mockData';
 import { Package, DollarSign, TrendingUp, Users, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Plus, Download } from 'lucide-react';
+import { Plus, Download, UserPlus } from 'lucide-react';
 import { Order, Client, Supplier, Product } from '@/types';
 import { useAuth } from '@/hooks/useAuth';
 import { useClients } from '@/hooks/useClients';
@@ -32,6 +34,7 @@ import { useSuppliers } from '@/hooks/useSuppliers';
 import { useOrders } from '@/hooks/useOrders';
 import { useProducts } from '@/hooks/useProducts';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
+import { useUserRoles } from '@/hooks/useUserRoles';
 import { Skeleton } from '@/components/ui/skeleton';
 import { isAfter, isBefore, startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -46,6 +49,7 @@ const pageConfig: Record<string, { title: string; subtitle: string }> = {
   shopee: { title: 'Shopee', subtitle: 'Pedidos do marketplace Shopee' },
   ministerio: { title: 'Vista o seu Ministério', subtitle: 'Encomendas para igrejas e eventos' },
   reports: { title: 'Relatórios', subtitle: 'Análise de vendas e lucros' },
+  team: { title: 'Equipe', subtitle: 'Gerenciar membros e permissões' },
 };
 
 const Index = () => {
@@ -55,6 +59,7 @@ const Index = () => {
   const { orders, loading: ordersLoading, addOrder, updateOrder, deleteOrder, refetch: refetchOrders } = useOrders();
   const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, updateProductsOrder } = useProducts();
   const { newOrdersCount, clearNotifications } = useOrderNotifications();
+  const { isAdmin, teamMembers, createUser, updateUserRole, removeUser } = useUserRoles();
   const { toast } = useToast();
   
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -81,9 +86,13 @@ const Index = () => {
   const [editProductOpen, setEditProductOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
+  // Team dialog states
+  const [addTeamMemberOpen, setAddTeamMemberOpen] = useState(false);
+  const [teamMemberToDelete, setTeamMemberToDelete] = useState<{ id: string; userId: string; name: string } | null>(null);
+
   // Delete dialog states
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteType, setDeleteType] = useState<'client' | 'supplier' | 'order' | 'product'>('client');
+  const [deleteType, setDeleteType] = useState<'client' | 'supplier' | 'order' | 'product' | 'team'>('client');
   const [itemToDelete, setItemToDelete] = useState<Client | Supplier | Order | Product | null>(null);
 
   // Filter orders
@@ -303,8 +312,22 @@ const Index = () => {
     setDeleteDialogOpen(true);
   };
 
+  // Team member handlers
+  const handleDeleteTeamMember = (member: { id: string; userId: string; name: string }) => {
+    setTeamMemberToDelete(member);
+    setDeleteType('team');
+    setDeleteDialogOpen(true);
+  };
+
   // Confirm delete
   const handleConfirmDelete = async () => {
+    if (deleteType === 'team' && teamMemberToDelete) {
+      await removeUser(teamMemberToDelete.userId);
+      setDeleteDialogOpen(false);
+      setTeamMemberToDelete(null);
+      return;
+    }
+
     if (!itemToDelete) return;
 
     try {
@@ -351,6 +374,11 @@ const Index = () => {
         return {
           title: 'Excluir Produto',
           description: `Tem certeza que deseja excluir "${(itemToDelete as Product)?.name}"? Esta ação não pode ser desfeita.`,
+        };
+      case 'team':
+        return {
+          title: 'Remover Membro',
+          description: `Tem certeza que deseja remover "${teamMemberToDelete?.name}" da equipe? Esta ação não pode ser desfeita.`,
         };
     }
   };
@@ -611,6 +639,37 @@ const Index = () => {
       case 'reports':
         return <ReportsView orders={orders} />;
 
+      case 'team':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="glass rounded-xl p-6 flex-1 mr-4 animate-fade-in">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-3xl">
+                    👥
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-serif font-semibold text-foreground">Gerenciamento de Equipe</h2>
+                    <p className="text-muted-foreground">Cadastre e gerencie os membros com acesso ao sistema</p>
+                  </div>
+                </div>
+              </div>
+              <Button 
+                className="gap-2 bg-primary hover:bg-primary/90"
+                onClick={() => setAddTeamMemberOpen(true)}
+              >
+                <UserPlus className="h-4 w-4" />
+                Novo Membro
+              </Button>
+            </div>
+            <TeamTable 
+              members={teamMembers}
+              onChangeRole={updateUserRole}
+              onDelete={handleDeleteTeamMember}
+            />
+          </div>
+        );
+
       default:
         return null;
     }
@@ -623,6 +682,7 @@ const Index = () => {
         onTabChange={handleTabChange}
         newOrdersCount={newOrdersCount}
         onSettingsClick={handleSettingsClick}
+        isAdmin={isAdmin}
       />
       
       <main className="ml-64">
@@ -704,12 +764,19 @@ const Index = () => {
         onSave={handleSaveProduct}
       />
 
+      {/* Team Member Dialog */}
+      <AddTeamMemberDialog
+        open={addTeamMemberOpen}
+        onOpenChange={setAddTeamMemberOpen}
+        onAdd={createUser}
+      />
+
       {/* Delete Confirmation */}
       <DeleteConfirmDialog
         open={deleteDialogOpen}
         onOpenChange={setDeleteDialogOpen}
-        title={deleteContent.title}
-        description={deleteContent.description}
+        title={deleteContent?.title || ''}
+        description={deleteContent?.description || ''}
         onConfirm={handleConfirmDelete}
       />
     </div>
