@@ -10,13 +10,20 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Eye, Edit, Trash2 } from 'lucide-react';
+import { Eye, Edit, Trash2, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface OrdersTableProps {
   orders: Order[];
   filterChannel?: string;
   onEdit: (order: Order) => void;
   onDelete: (order: Order) => void;
+  onStatusChange?: (order: Order, newStatus: Order['status']) => void;
 }
 
 const statusConfig = {
@@ -26,13 +33,15 @@ const statusConfig = {
   cancelled: { label: 'Cancelado', className: 'bg-destructive/10 text-destructive border-destructive/30' },
 };
 
+const statusOrder: Order['status'][] = ['pending', 'processing', 'completed'];
+
 const channelConfig = {
   shopee: { label: 'Shopee', icon: '🛒' },
   ministerio: { label: 'Ministério', icon: '⛪' },
   site: { label: 'Site', icon: '🌐' },
 };
 
-export function OrdersTable({ orders, filterChannel, onEdit, onDelete }: OrdersTableProps) {
+export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onStatusChange }: OrdersTableProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -43,6 +52,50 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete }: OrdersT
   const filteredOrders = filterChannel 
     ? orders.filter(o => o.channel === filterChannel)
     : orders;
+
+  const getNextStatus = (currentStatus: Order['status']): Order['status'] | null => {
+    if (currentStatus === 'cancelled') return 'pending';
+    const currentIndex = statusOrder.indexOf(currentStatus);
+    if (currentIndex < statusOrder.length - 1) {
+      return statusOrder[currentIndex + 1];
+    }
+    return null;
+  };
+
+  const getPreviousStatus = (currentStatus: Order['status']): Order['status'] | null => {
+    if (currentStatus === 'cancelled') return null;
+    const currentIndex = statusOrder.indexOf(currentStatus);
+    if (currentIndex > 0) {
+      return statusOrder[currentIndex - 1];
+    }
+    return null;
+  };
+
+  const handleAdvanceStatus = (order: Order) => {
+    const nextStatus = getNextStatus(order.status);
+    if (nextStatus && onStatusChange) {
+      onStatusChange(order, nextStatus);
+    }
+  };
+
+  const handleRegressStatus = (order: Order) => {
+    const prevStatus = getPreviousStatus(order.status);
+    if (prevStatus && onStatusChange) {
+      onStatusChange(order, prevStatus);
+    }
+  };
+
+  const handleCancelOrder = (order: Order) => {
+    if (onStatusChange && order.status !== 'cancelled') {
+      onStatusChange(order, 'cancelled');
+    }
+  };
+
+  const handleCompleteOrder = (order: Order) => {
+    if (onStatusChange && order.status !== 'completed') {
+      onStatusChange(order, 'completed');
+    }
+  };
 
   return (
     <div className="glass rounded-xl overflow-hidden animate-fade-in">
@@ -68,6 +121,9 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete }: OrdersT
             const totalCost = order.supplierCost * order.quantity;
             const totalSale = order.salePrice * order.quantity;
             const profit = totalSale - totalCost;
+
+            const canAdvance = getNextStatus(order.status) !== null;
+            const canRegress = getPreviousStatus(order.status) !== null;
 
             return (
               <TableRow 
@@ -101,10 +157,88 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete }: OrdersT
                   +{formatCurrency(profit)}
                 </TableCell>
                 <TableCell>
-                  <Badge className={status.className}>{status.label}</Badge>
+                  <TooltipProvider>
+                    <div className="flex items-center gap-1">
+                      {onStatusChange && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleRegressStatus(order)}
+                              disabled={!canRegress}
+                            >
+                              <ChevronLeft className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {canRegress ? `Voltar para ${statusConfig[getPreviousStatus(order.status)!].label}` : 'Não é possível retroceder'}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                      
+                      <Badge className={cn(status.className, "min-w-[90px] justify-center")}>
+                        {status.label}
+                      </Badge>
+                      
+                      {onStatusChange && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => handleAdvanceStatus(order)}
+                              disabled={!canAdvance}
+                            >
+                              <ChevronRight className="h-3 w-3" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {canAdvance ? `Avançar para ${statusConfig[getNextStatus(order.status)!].label}` : 'Pedido já concluído'}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+                    </div>
+                  </TooltipProvider>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center justify-end gap-1">
+                    {onStatusChange && order.status !== 'completed' && order.status !== 'cancelled' && (
+                      <>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-success hover:text-success hover:bg-success/10"
+                                onClick={() => handleCompleteOrder(order)}
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Concluir pedido</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => handleCancelOrder(order)}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Cancelar pedido</TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </>
+                    )}
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
                       <Eye className="h-4 w-4" />
                     </Button>
