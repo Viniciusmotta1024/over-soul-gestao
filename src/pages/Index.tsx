@@ -33,7 +33,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useProducts } from '@/hooks/useProducts';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { Skeleton } from '@/components/ui/skeleton';
-import { isAfter, isBefore, startOfDay, endOfDay } from 'date-fns';
+import { isAfter, isBefore, startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 
 const pageConfig: Record<string, { title: string; subtitle: string }> = {
@@ -154,11 +154,53 @@ const Index = () => {
     return result;
   }, [products, productFilters]);
 
-  // Calculate stats from actual data
-  const totalOrders = orders.length;
-  const totalRevenue = orders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
-  const totalProfit = orders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
-  const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'processing').length;
+  // Calculate stats from actual data with month-over-month comparison
+  const statsData = useMemo(() => {
+    const now = new Date();
+    const currentMonthStart = startOfMonth(now);
+    const currentMonthEnd = endOfMonth(now);
+    const lastMonthStart = startOfMonth(subMonths(now, 1));
+    const lastMonthEnd = endOfMonth(subMonths(now, 1));
+
+    // Filter orders by month
+    const currentMonthOrders = orders.filter(o => 
+      o.createdAt >= currentMonthStart && o.createdAt <= currentMonthEnd
+    );
+    const lastMonthOrders = orders.filter(o => 
+      o.createdAt >= lastMonthStart && o.createdAt <= lastMonthEnd
+    );
+
+    // Current month stats
+    const currentOrdersCount = currentMonthOrders.length;
+    const currentRevenue = currentMonthOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
+    const currentProfit = currentMonthOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
+
+    // Last month stats
+    const lastOrdersCount = lastMonthOrders.length;
+    const lastRevenue = lastMonthOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
+    const lastProfit = lastMonthOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
+
+    // Calculate percentage changes
+    const calcTrend = (current: number, previous: number) => {
+      if (previous === 0) return current > 0 ? { value: 100, isPositive: true } : null;
+      const change = ((current - previous) / previous) * 100;
+      return { value: Math.abs(parseFloat(change.toFixed(1))), isPositive: change >= 0 };
+    };
+
+    return {
+      totalOrders: orders.length,
+      totalRevenue: orders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0),
+      totalProfit: orders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0),
+      pendingOrders: orders.filter(o => o.status === 'pending' || o.status === 'processing').length,
+      trends: {
+        orders: calcTrend(currentOrdersCount, lastOrdersCount),
+        revenue: calcTrend(currentRevenue, lastRevenue),
+        profit: calcTrend(currentProfit, lastProfit),
+      }
+    };
+  }, [orders]);
+
+  const { totalOrders, totalRevenue, totalProfit, pendingOrders } = statsData;
 
   // Calculate channel stats from actual orders
   const getChannelStats = () => {
@@ -363,7 +405,7 @@ const Index = () => {
                 title="Total de Pedidos"
                 value={totalOrders}
                 icon={Package}
-                trend={{ value: 12, isPositive: true }}
+                trend={statsData.trends.orders ?? undefined}
                 delay={0}
               />
               <StatsCard
@@ -371,7 +413,7 @@ const Index = () => {
                 value={formatCurrency(totalRevenue)}
                 icon={DollarSign}
                 variant="primary"
-                trend={{ value: 8.5, isPositive: true }}
+                trend={statsData.trends.revenue ?? undefined}
                 delay={100}
               />
               <StatsCard
@@ -379,7 +421,7 @@ const Index = () => {
                 value={formatCurrency(totalProfit)}
                 icon={TrendingUp}
                 variant="success"
-                trend={{ value: 15.2, isPositive: true }}
+                trend={statsData.trends.profit ?? undefined}
                 delay={200}
               />
               <StatsCard
