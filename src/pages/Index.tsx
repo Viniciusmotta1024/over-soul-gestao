@@ -10,6 +10,7 @@ import { SuppliersTable } from '@/components/suppliers/SuppliersTable';
 import { ClientsTable } from '@/components/clients/ClientsTable';
 import { ProductsTable } from '@/components/products/ProductsTable';
 import { ReportsView } from '@/components/reports/ReportsView';
+import { PricingCalculator } from '@/components/pricing/PricingCalculator';
 import { AddClientDialog } from '@/components/clients/AddClientDialog';
 import { EditClientDialog } from '@/components/clients/EditClientDialog';
 import { AddSupplierDialog } from '@/components/suppliers/AddSupplierDialog';
@@ -40,6 +41,7 @@ const pageConfig: Record<string, { title: string; subtitle: string }> = {
   products: { title: 'Produtos', subtitle: 'Gerenciar catálogo de produtos' },
   clients: { title: 'Clientes', subtitle: 'Gerenciar clientes e empresas' },
   suppliers: { title: 'Fornecedores', subtitle: 'Valores e produtos dos fornecedores' },
+  pricing: { title: 'Precificação', subtitle: 'Calculadora de custos e margem de lucro' },
   shopee: { title: 'Shopee', subtitle: 'Pedidos do marketplace Shopee' },
   ministerio: { title: 'Vista o seu Ministério', subtitle: 'Encomendas para igrejas e eventos' },
   reports: { title: 'Relatórios', subtitle: 'Análise de vendas e lucros' },
@@ -486,6 +488,9 @@ const Index = () => {
             />
           </div>
         );
+
+      case 'pricing':
+        return <PricingCalculator />;
 
       case 'reports':
         return <ReportsView orders={orders} />;

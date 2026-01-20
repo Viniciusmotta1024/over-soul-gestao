@@ -8,7 +8,8 @@ import {
   BarChart3,
   Settings,
   Users,
-  ShoppingCart
+  ShoppingCart,
+  Calculator
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
@@ -25,6 +26,7 @@ const menuItems = [
   { id: 'products', label: 'Produtos', icon: ShoppingCart },
   { id: 'clients', label: 'Clientes', icon: Users },
   { id: 'suppliers', label: 'Fornecedores', icon: Truck },
+  { id: 'pricing', label: 'Precificação', icon: Calculator },
   { id: 'shopee', label: 'Shopee', icon: ShoppingBag },
   { id: 'ministerio', label: 'Vista o seu Ministério', icon: Church },
   { id: 'reports', label: 'Relatórios', icon: BarChart3 },
