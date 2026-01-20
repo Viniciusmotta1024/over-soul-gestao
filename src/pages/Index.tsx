@@ -637,7 +637,7 @@ const Index = () => {
         open={addOrderOpen}
         onOpenChange={setAddOrderOpen}
         clients={clients}
-        suppliers={effectiveSuppliers}
+        products={products}
         onAdd={handleAddOrder}
       />
       <EditOrderDialog
@@ -645,7 +645,7 @@ const Index = () => {
         onOpenChange={setEditOrderOpen}
         order={selectedOrder}
         clients={clients}
-        suppliers={effectiveSuppliers}
+        products={products}
         onSave={handleSaveOrder}
       />
 
