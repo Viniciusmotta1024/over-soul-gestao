@@ -14,7 +14,190 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          orders_count: number
+          phone: string
+          state: string | null
+          total_spent: number
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          orders_count?: number
+          phone: string
+          state?: string | null
+          total_spent?: number
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          orders_count?: number
+          phone?: string
+          state?: string | null
+          total_spent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      orders: {
+        Row: {
+          channel: string
+          client_id: string | null
+          created_at: string
+          customer_name: string
+          id: string
+          product: string
+          quantity: number
+          sale_price: number
+          size: string
+          status: string
+          supplier_cost: number
+          updated_at: string
+        }
+        Insert: {
+          channel: string
+          client_id?: string | null
+          created_at?: string
+          customer_name: string
+          id?: string
+          product: string
+          quantity?: number
+          sale_price: number
+          size: string
+          status?: string
+          supplier_cost: number
+          updated_at?: string
+        }
+        Update: {
+          channel?: string
+          client_id?: string | null
+          created_at?: string
+          customer_name?: string
+          id?: string
+          product?: string
+          quantity?: number
+          sale_price?: number
+          size?: string
+          status?: string
+          supplier_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      supplier_products: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          sizes: string[]
+          supplier_id: string
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          sizes?: string[]
+          supplier_id: string
+          unit_cost: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          sizes?: string[]
+          supplier_id?: string
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          contact: string
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          contact: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          contact?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
