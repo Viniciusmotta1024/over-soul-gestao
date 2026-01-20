@@ -1,0 +1,131 @@
+import { Order, Supplier, SalesChannel } from '@/types';
+
+export const mockOrders: Order[] = [
+  {
+    id: '1',
+    customerName: 'Maria Silva',
+    product: 'Camiseta Básica',
+    size: 'M',
+    quantity: 2,
+    channel: 'shopee',
+    status: 'completed',
+    supplierCost: 25.00,
+    salePrice: 59.90,
+    createdAt: new Date('2024-01-15'),
+  },
+  {
+    id: '2',
+    customerName: 'Igreja Batista Central',
+    product: 'Camiseta Personalizada',
+    size: 'G',
+    quantity: 50,
+    channel: 'ministerio',
+    status: 'processing',
+    supplierCost: 22.00,
+    salePrice: 45.00,
+    createdAt: new Date('2024-01-14'),
+  },
+  {
+    id: '3',
+    customerName: 'João Pereira',
+    product: 'Moletom Premium',
+    size: 'GG',
+    quantity: 1,
+    channel: 'site',
+    status: 'pending',
+    supplierCost: 55.00,
+    salePrice: 129.90,
+    createdAt: new Date('2024-01-13'),
+  },
+  {
+    id: '4',
+    customerName: 'Ana Costa',
+    product: 'Camiseta Básica',
+    size: 'P',
+    quantity: 3,
+    channel: 'shopee',
+    status: 'completed',
+    supplierCost: 25.00,
+    salePrice: 59.90,
+    createdAt: new Date('2024-01-12'),
+  },
+  {
+    id: '5',
+    customerName: 'Igreja Metodista',
+    product: 'Kit Evento 100un',
+    size: 'Variados',
+    quantity: 100,
+    channel: 'ministerio',
+    status: 'processing',
+    supplierCost: 20.00,
+    salePrice: 38.00,
+    createdAt: new Date('2024-01-11'),
+  },
+  {
+    id: '6',
+    customerName: 'Pedro Santos',
+    product: 'Camiseta Premium',
+    size: 'M',
+    quantity: 2,
+    channel: 'site',
+    status: 'completed',
+    supplierCost: 35.00,
+    salePrice: 89.90,
+    createdAt: new Date('2024-01-10'),
+  },
+];
+
+export const mockSuppliers: Supplier[] = [
+  {
+    id: '1',
+    name: 'Malhas Brasil',
+    contact: '(11) 99999-1234',
+    products: [
+      { name: 'Camiseta Básica', sizes: ['P', 'M', 'G', 'GG'], unitCost: 25.00 },
+      { name: 'Camiseta Premium', sizes: ['P', 'M', 'G', 'GG'], unitCost: 35.00 },
+      { name: 'Regata', sizes: ['P', 'M', 'G'], unitCost: 20.00 },
+    ],
+  },
+  {
+    id: '2',
+    name: 'Tecidos & Cia',
+    contact: '(11) 98888-5678',
+    products: [
+      { name: 'Moletom Premium', sizes: ['P', 'M', 'G', 'GG', 'XG'], unitCost: 55.00 },
+      { name: 'Moletom Básico', sizes: ['P', 'M', 'G', 'GG'], unitCost: 45.00 },
+    ],
+  },
+  {
+    id: '3',
+    name: 'Confecções Unity',
+    contact: '(21) 97777-9012',
+    products: [
+      { name: 'Camiseta Personalizada', sizes: ['P', 'M', 'G', 'GG'], unitCost: 22.00 },
+      { name: 'Kit Evento 100un', sizes: ['Variados'], unitCost: 20.00 },
+    ],
+  },
+];
+
+export const salesChannels: SalesChannel[] = [
+  {
+    id: 'shopee',
+    name: 'Shopee',
+    icon: '🛒',
+    totalOrders: 156,
+    totalRevenue: 12450.00,
+  },
+  {
+    id: 'ministerio',
+    name: 'Vista o seu Ministério',
+    icon: '⛪',
+    totalOrders: 45,
+    totalRevenue: 28500.00,
+  },
+  {
+    id: 'site',
+    name: 'Site Próprio',
+    icon: '🌐',
+    totalOrders: 89,
+    totalRevenue: 8920.00,
+  },
+];
