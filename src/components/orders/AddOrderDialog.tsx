@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Order, Client, Supplier } from '@/types';
+import { Order, Client, Product } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,7 +22,7 @@ interface AddOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clients: Client[];
-  suppliers: Supplier[];
+  products: Product[];
   onAdd: (order: Omit<Order, 'id' | 'createdAt'>) => void;
 }
 
@@ -32,7 +32,7 @@ const channels = [
   { id: 'site', name: 'Site Próprio', icon: '🌐' },
 ];
 
-export function AddOrderDialog({ open, onOpenChange, clients, suppliers, onAdd }: AddOrderDialogProps) {
+export function AddOrderDialog({ open, onOpenChange, clients, products, onAdd }: AddOrderDialogProps) {
   const [formData, setFormData] = useState({
     customerId: '',
     customerName: '',
@@ -45,13 +45,10 @@ export function AddOrderDialog({ open, onOpenChange, clients, suppliers, onAdd }
     status: 'pending' as Order['status'],
   });
 
-  const [selectedSupplier, setSelectedSupplier] = useState('');
   const [availableSizes, setAvailableSizes] = useState<string[]>([]);
 
-  // Get all products from all suppliers
-  const allProducts = suppliers.flatMap(s => 
-    s.products.map(p => ({ ...p, supplierId: s.id, supplierName: s.name }))
-  );
+  // Filter only active products
+  const activeProducts = products.filter(p => p.isActive);
 
   const handleClientChange = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
@@ -62,15 +59,15 @@ export function AddOrderDialog({ open, onOpenChange, clients, suppliers, onAdd }
     });
   };
 
-  const handleProductChange = (productName: string) => {
-    const product = allProducts.find(p => p.name === productName);
+  const handleProductChange = (productId: string) => {
+    const product = activeProducts.find(p => p.id === productId);
     if (product) {
-      setSelectedSupplier(product.supplierId);
       setAvailableSizes(product.sizes);
       setFormData({
         ...formData,
-        product: productName,
-        supplierCost: product.unitCost,
+        product: product.name,
+        supplierCost: product.supplierCost,
+        salePrice: product.price,
         size: '',
       });
     }
@@ -101,7 +98,6 @@ export function AddOrderDialog({ open, onOpenChange, clients, suppliers, onAdd }
         salePrice: 0,
         status: 'pending',
       });
-      setSelectedSupplier('');
       setAvailableSizes([]);
       onOpenChange(false);
     }
@@ -156,21 +152,27 @@ export function AddOrderDialog({ open, onOpenChange, clients, suppliers, onAdd }
           {/* Product Selection */}
           <div className="space-y-2">
             <Label>Produto *</Label>
-            <Select value={formData.product} onValueChange={handleProductChange}>
+            <Select onValueChange={handleProductChange}>
               <SelectTrigger className="bg-secondary/50">
-                <SelectValue placeholder="Selecione um produto" />
+                <SelectValue placeholder={activeProducts.length === 0 ? "Nenhum produto cadastrado" : "Selecione um produto"} />
               </SelectTrigger>
               <SelectContent>
-                {allProducts.map((product, index) => (
-                  <SelectItem key={`${product.name}-${index}`} value={product.name}>
-                    <span className="flex items-center justify-between w-full">
-                      <span>{product.name}</span>
-                      <span className="text-muted-foreground text-xs ml-2">
-                        ({product.supplierName})
+                {activeProducts.length === 0 ? (
+                  <div className="p-2 text-center text-muted-foreground text-sm">
+                    Cadastre produtos primeiro na aba "Produtos"
+                  </div>
+                ) : (
+                  activeProducts.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      <span className="flex items-center justify-between w-full">
+                        <span>{product.name}</span>
+                        <span className="text-muted-foreground text-xs ml-2">
+                          ({product.collection || 'Sem coleção'})
+                        </span>
                       </span>
-                    </span>
-                  </SelectItem>
-                ))}
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
