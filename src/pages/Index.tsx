@@ -53,7 +53,7 @@ const Index = () => {
   const { clients, loading: clientsLoading, addClient, updateClient, deleteClient } = useClients();
   const { suppliers, loading: suppliersLoading, addSupplier, updateSupplier, deleteSupplier } = useSuppliers();
   const { orders, loading: ordersLoading, addOrder, updateOrder, deleteOrder, refetch: refetchOrders } = useOrders();
-  const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct } = useProducts();
+  const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, updateProductsOrder } = useProducts();
   const { newOrdersCount, clearNotifications } = useOrderNotifications();
   const { toast } = useToast();
   
@@ -469,6 +469,7 @@ const Index = () => {
               products={filteredProducts} 
               onEdit={handleEditProduct}
               onDelete={handleDeleteProduct}
+              onReorder={updateProductsOrder}
               groupByCollection={productFilters.sortBy === 'collection'}
             />
           </div>

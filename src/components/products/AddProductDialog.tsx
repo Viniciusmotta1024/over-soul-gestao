@@ -50,6 +50,7 @@ export function AddProductDialog({ open, onOpenChange, onAdd }: AddProductDialog
         stock: parseInt(formData.stock) || 0,
         sizes: formData.sizes.split(',').map(s => s.trim()).filter(Boolean),
         isActive: formData.isActive,
+        sortOrder: 0,
       });
       
       setFormData({

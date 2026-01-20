@@ -1,7 +1,7 @@
 import { Product } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Package, ChevronDown, ChevronRight, GripVertical, LayoutGrid, List } from 'lucide-react';
+import { Edit, Trash2, Package, ChevronDown, GripVertical, LayoutGrid, List } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ProductCard } from './ProductCard';
 import {
@@ -21,6 +21,10 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  defaultDropAnimationSideEffects,
+  DropAnimation,
 } from '@dnd-kit/core';
 import {
   arrayMove,
@@ -32,6 +36,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { createPortal } from 'react-dom';
 
 interface ProductsTableProps {
   products: Product[];
@@ -41,18 +46,30 @@ interface ProductsTableProps {
   groupByCollection?: boolean;
 }
 
+const dropAnimationConfig: DropAnimation = {
+  sideEffects: defaultDropAnimationSideEffects({
+    styles: {
+      active: {
+        opacity: '0.4',
+      },
+    },
+  }),
+};
+
 function SortableTableRow({ 
   product, 
   onEdit, 
   onDelete,
   formatCurrency,
   getStockStatus,
+  isDragging,
 }: { 
   product: Product;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
   formatCurrency: (value: number) => string;
   getStockStatus: (stock: number) => { label: string; variant: 'destructive' | 'secondary' | 'default' };
+  isDragging?: boolean;
 }) {
   const {
     attributes,
@@ -60,25 +77,30 @@ function SortableTableRow({
     setNodeRef,
     transform,
     transition,
-    isDragging,
+    isDragging: isSortableDragging,
   } = useSortable({ id: product.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isSortableDragging ? 0.3 : 1,
+    backgroundColor: isSortableDragging ? 'hsl(var(--secondary))' : undefined,
   };
 
   const stockStatus = getStockStatus(product.stock);
   const profit = product.price - product.supplierCost;
 
   return (
-    <TableRow ref={setNodeRef} style={style} className={`group ${isDragging ? 'bg-secondary/50' : ''}`}>
+    <TableRow 
+      ref={setNodeRef} 
+      style={style} 
+      className={`group transition-colors ${isSortableDragging ? 'shadow-lg z-10 relative' : ''}`}
+    >
       <TableCell className="w-10">
         <div
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 rounded hover:bg-secondary"
+          className="cursor-grab active:cursor-grabbing p-1.5 rounded-md hover:bg-secondary/80 transition-colors"
         >
           <GripVertical className="h-4 w-4 text-muted-foreground" />
         </div>
@@ -145,20 +167,46 @@ function SortableTableRow({
   );
 }
 
+// Overlay component for drag preview
+function DragOverlayCard({ product, formatCurrency }: { product: Product; formatCurrency: (value: number) => string }) {
+  return (
+    <div className="bg-card border border-primary shadow-2xl rounded-lg p-4 w-64 opacity-95">
+      <div className="flex items-center gap-3">
+        {product.imageUrl ? (
+          <img 
+            src={product.imageUrl} 
+            alt={product.name}
+            className="h-12 w-12 rounded-md object-cover"
+          />
+        ) : (
+          <div className="h-12 w-12 rounded-md bg-secondary flex items-center justify-center">
+            <Package className="h-6 w-6 text-muted-foreground" />
+          </div>
+        )}
+        <div>
+          <p className="font-semibold text-foreground">{product.name}</p>
+          <p className="text-sm text-primary font-medium">{formatCurrency(product.price)}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCollection = true }: ProductsTableProps) {
   const [expandedCollections, setExpandedCollections] = useState<Set<string>>(new Set(['all']));
   const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
   const [localProducts, setLocalProducts] = useState<Product[]>(products);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   // Update local products when props change
-  useMemo(() => {
+  useEffect(() => {
     setLocalProducts(products);
   }, [products]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -215,8 +263,13 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
     setExpandedCollections(new Set());
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
   const handleDragEnd = (event: DragEndEvent, collectionProducts: Product[], collection: string) => {
     const { active, over } = event;
+    setActiveId(null);
     
     if (over && active.id !== over.id) {
       const oldIndex = collectionProducts.findIndex(p => p.id === active.id);
@@ -224,16 +277,20 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
       
       const newCollectionProducts = arrayMove(collectionProducts, oldIndex, newIndex);
       
-      // Update local state
-      const newLocalProducts = localProducts.map(p => {
-        const reorderedProduct = newCollectionProducts.find(np => np.id === p.id);
-        return reorderedProduct || p;
+      // Update local state immediately for responsive UI
+      setLocalProducts(prev => {
+        const otherProducts = prev.filter(p => 
+          (p.collection || 'Sem Coleção') !== collection
+        );
+        return [...otherProducts, ...newCollectionProducts];
       });
       
-      setLocalProducts(newLocalProducts);
-      onReorder?.(newLocalProducts);
+      // Persist to database
+      onReorder?.(newCollectionProducts);
     }
   };
+
+  const activeProduct = activeId ? localProducts.find(p => p.id === activeId) : null;
 
   if (localProducts.length === 0) {
     return (
@@ -251,6 +308,7 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
       onDragEnd={(event) => handleDragEnd(event, collectionProducts, collection)}
     >
       <SortableContext items={collectionProducts.map(p => p.id)} strategy={rectSortingStrategy}>
@@ -266,6 +324,14 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
           ))}
         </div>
       </SortableContext>
+      {createPortal(
+        <DragOverlay dropAnimation={dropAnimationConfig}>
+          {activeProduct ? (
+            <DragOverlayCard product={activeProduct} formatCurrency={formatCurrency} />
+          ) : null}
+        </DragOverlay>,
+        document.body
+      )}
     </DndContext>
   );
 
@@ -273,6 +339,7 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
       onDragEnd={(event) => handleDragEnd(event, collectionProducts, collection)}
     >
       <SortableContext items={collectionProducts.map(p => p.id)} strategy={verticalListSortingStrategy}>
@@ -303,6 +370,14 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
           </TableBody>
         </Table>
       </SortableContext>
+      {createPortal(
+        <DragOverlay dropAnimation={dropAnimationConfig}>
+          {activeProduct ? (
+            <DragOverlayCard product={activeProduct} formatCurrency={formatCurrency} />
+          ) : null}
+        </DragOverlay>,
+        document.body
+      )}
     </DndContext>
   );
 
@@ -363,7 +438,7 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
               <CollapsibleTrigger asChild>
                 <div className="flex items-center justify-between p-4 bg-secondary/30 hover:bg-secondary/50 cursor-pointer transition-colors">
                   <div className="flex items-center gap-3">
-                    <div className={`transform transition-transform duration-200 ${isExpanded ? 'rotate-0' : '-rotate-90'}`}>
+                    <div className={`transform transition-transform duration-300 ease-out ${isExpanded ? 'rotate-0' : '-rotate-90'}`}>
                       <ChevronDown className="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div>
@@ -384,7 +459,7 @@ export function ProductsTable({ products, onEdit, onDelete, onReorder, groupByCo
                 </div>
               </CollapsibleTrigger>
               
-              <CollapsibleContent className="animate-accordion-down data-[state=closed]:animate-accordion-up">
+              <CollapsibleContent className="overflow-hidden data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
                 {viewMode === 'grid' 
                   ? renderGridView(collectionProducts, collection)
                   : renderTableView(collectionProducts, collection)
