@@ -7,10 +7,10 @@ interface RecentOrdersProps {
 }
 
 const statusConfig = {
-  pending: { label: 'Pendente', className: 'bg-warning/20 text-warning border-warning/30' },
-  processing: { label: 'Processando', className: 'bg-info/20 text-info border-info/30' },
-  completed: { label: 'Concluído', className: 'bg-success/20 text-success border-success/30' },
-  cancelled: { label: 'Cancelado', className: 'bg-destructive/20 text-destructive border-destructive/30' },
+  pending: { label: 'Pendente', className: 'bg-warning/10 text-warning border-warning/30' },
+  processing: { label: 'Processando', className: 'bg-info/10 text-info border-info/30' },
+  completed: { label: 'Concluído', className: 'bg-success/10 text-success border-success/30' },
+  cancelled: { label: 'Cancelado', className: 'bg-destructive/10 text-destructive border-destructive/30' },
 };
 
 const channelConfig = {
@@ -30,11 +30,11 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
   return (
     <div className="glass rounded-xl p-6 animate-fade-in" style={{ animationDelay: '300ms' }}>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-semibold text-foreground">Pedidos Recentes</h3>
+        <h3 className="text-lg font-serif font-semibold text-foreground">Pedidos Recentes</h3>
         <button className="text-sm text-primary hover:underline">Ver todos</button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {orders.slice(0, 5).map((order, index) => {
           const status = statusConfig[order.status];
           const channel = channelConfig[order.channel];
@@ -48,7 +48,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
               )}
               style={{ animationDelay: `${400 + index * 50}ms` }}
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-lg">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-card border border-border text-lg">
                 {channel.icon}
               </div>
               
@@ -60,7 +60,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
               </div>
 
               <div className="text-right">
-                <p className="font-semibold text-foreground">{formatCurrency(order.salePrice * order.quantity)}</p>
+                <p className="font-serif font-semibold text-foreground">{formatCurrency(order.salePrice * order.quantity)}</p>
                 <p className="text-xs text-success">+{formatCurrency(profit)} lucro</p>
               </div>
 

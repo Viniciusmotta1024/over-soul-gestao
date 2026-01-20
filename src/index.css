@@ -2,65 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    --background: 40 30% 98%;
+    --foreground: 30 10% 20%;
 
-    --card: 222 47% 8%;
-    --card-foreground: 210 40% 98%;
+    --card: 0 0% 100%;
+    --card-foreground: 30 10% 20%;
 
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 30 10% 20%;
 
-    --primary: 160 84% 39%;
-    --primary-foreground: 222 47% 6%;
+    --primary: 75 20% 35%;
+    --primary-foreground: 40 30% 98%;
 
-    --secondary: 222 30% 14%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 40 20% 94%;
+    --secondary-foreground: 30 10% 20%;
 
-    --muted: 222 30% 18%;
-    --muted-foreground: 215 20% 55%;
+    --muted: 40 15% 92%;
+    --muted-foreground: 30 10% 45%;
 
-    --accent: 160 60% 45%;
-    --accent-foreground: 222 47% 6%;
+    --accent: 75 25% 40%;
+    --accent-foreground: 40 30% 98%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 40 30% 98%;
 
-    --border: 222 30% 18%;
-    --input: 222 30% 14%;
-    --ring: 160 84% 39%;
+    --border: 40 15% 88%;
+    --input: 40 15% 92%;
+    --ring: 75 20% 35%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: 222 47% 7%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 160 84% 39%;
-    --sidebar-primary-foreground: 222 47% 6%;
-    --sidebar-accent: 222 30% 12%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 30% 15%;
-    --sidebar-ring: 160 84% 39%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 30 10% 20%;
+    --sidebar-primary: 75 20% 35%;
+    --sidebar-primary-foreground: 40 30% 98%;
+    --sidebar-accent: 40 20% 96%;
+    --sidebar-accent-foreground: 30 10% 20%;
+    --sidebar-border: 40 15% 90%;
+    --sidebar-ring: 75 20% 35%;
 
     /* Custom tokens */
-    --success: 160 84% 39%;
+    --success: 142 70% 40%;
     --warning: 38 92% 50%;
     --info: 199 89% 48%;
+    --olive: 75 20% 35%;
+    --olive-light: 75 15% 45%;
+    --cream: 40 30% 96%;
+    --brown: 30 25% 30%;
     
-    --gradient-primary: linear-gradient(135deg, hsl(160 84% 39%), hsl(160 60% 30%));
-    --gradient-card: linear-gradient(180deg, hsl(222 47% 10%), hsl(222 47% 8%));
-    --gradient-glow: radial-gradient(ellipse at top, hsl(160 84% 39% / 0.15), transparent 50%);
+    --gradient-primary: linear-gradient(135deg, hsl(75 20% 35%), hsl(75 15% 45%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(40 20% 98%));
     
-    --shadow-glow: 0 0 40px hsl(160 84% 39% / 0.2);
-    --shadow-card: 0 4px 24px hsl(222 47% 4% / 0.4);
+    --shadow-soft: 0 2px 8px hsl(30 10% 20% / 0.06);
+    --shadow-card: 0 4px 20px hsl(30 10% 20% / 0.08);
+    --shadow-hover: 0 8px 30px hsl(30 10% 20% / 0.12);
   }
 
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
+    --background: 30 10% 10%;
+    --foreground: 40 30% 95%;
   }
 }
 
@@ -70,25 +74,32 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
   }
 }
 
 @layer utilities {
+  .font-serif {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+  }
+  
   .glass {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+    @apply bg-card border border-border;
+    box-shadow: var(--shadow-card);
   }
   
   .glass-hover {
-    @apply hover:bg-card/90 hover:border-primary/30 transition-all duration-300;
+    @apply transition-all duration-300;
+  }
+  
+  .glass-hover:hover {
+    box-shadow: var(--shadow-hover);
+    @apply border-primary/30;
   }
   
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
-  }
-  
-  .glow {
-    box-shadow: var(--shadow-glow);
+    @apply bg-clip-text text-transparent;
+    background-image: var(--gradient-primary);
   }
 }

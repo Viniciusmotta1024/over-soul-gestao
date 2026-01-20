@@ -7,7 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import { Phone, Package } from 'lucide-react';
+import { Phone, Package, Mail } from 'lucide-react';
 
 interface SuppliersTableProps {
   suppliers: Supplier[];
@@ -33,23 +33,31 @@ export function SuppliersTable({ suppliers }: SuppliersTableProps) {
             <AccordionItem value={supplier.id} className="border-none">
               <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-secondary/30">
                 <div className="flex items-center gap-4 flex-1">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/20">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                     <Package className="h-6 w-6 text-primary" />
                   </div>
                   <div className="text-left">
-                    <h3 className="font-semibold text-foreground">{supplier.name}</h3>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="h-3 w-3" />
-                      {supplier.contact}
+                    <h3 className="font-medium text-foreground">{supplier.name}</h3>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {supplier.contact}
+                      </span>
+                      {supplier.email && (
+                        <span className="flex items-center gap-1">
+                          <Mail className="h-3 w-3" />
+                          {supplier.email}
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <Badge className="ml-auto mr-4 bg-secondary text-muted-foreground">
+                  <Badge className="ml-auto mr-4 bg-secondary text-muted-foreground border-border">
                     {supplier.products.length} produtos
                   </Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-4">
-                <div className="rounded-lg bg-secondary/30 overflow-hidden">
+                <div className="rounded-lg bg-secondary/30 overflow-hidden border border-border">
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-border">
@@ -82,14 +90,14 @@ export function SuppliersTable({ suppliers }: SuppliersTableProps) {
                                 <Badge 
                                   key={size} 
                                   variant="outline" 
-                                  className="bg-background/50 text-xs"
+                                  className="bg-card text-xs"
                                 >
                                   {size}
                                 </Badge>
                               ))}
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-right font-semibold text-primary">
+                          <td className="px-4 py-3 text-right font-serif font-semibold text-primary">
                             {formatCurrency(product.unitCost)}
                           </td>
                         </tr>

@@ -9,9 +9,9 @@ interface HeaderProps {
 
 export function Header({ title, subtitle }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-background/80 backdrop-blur-xl px-8">
+    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-8">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+        <h1 className="text-2xl font-serif font-semibold text-foreground">{title}</h1>
         {subtitle && (
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         )}
@@ -23,13 +23,13 @@ export function Header({ title, subtitle }: HeaderProps) {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar pedidos..."
-            className="w-64 bg-secondary/50 border-border pl-10 focus:border-primary"
+            className="w-64 bg-secondary/50 border-border pl-10 focus:border-primary focus:ring-primary"
           />
         </div>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5 text-muted-foreground" />
+        <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
+          <Bell className="h-5 w-5" />
           <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
             3
           </span>
@@ -37,7 +37,7 @@ export function Header({ title, subtitle }: HeaderProps) {
 
         {/* User */}
         <Button variant="ghost" size="icon" className="rounded-full">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/20">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
             <User className="h-5 w-5 text-primary" />
           </div>
         </Button>

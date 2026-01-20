@@ -27,16 +27,16 @@ export function StatsCard({
     <div 
       className={cn(
         "glass glass-hover rounded-xl p-6 animate-fade-in",
-        variant === 'primary' && "border-primary/30 bg-primary/5",
-        variant === 'success' && "border-success/30 bg-success/5",
-        variant === 'warning' && "border-warning/30 bg-warning/5"
+        variant === 'primary' && "border-primary/30",
+        variant === 'success' && "border-success/30",
+        variant === 'warning' && "border-warning/30"
       )}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-start justify-between">
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
-          <p className="text-3xl font-bold text-foreground">{value}</p>
+          <p className="text-3xl font-serif font-semibold text-foreground">{value}</p>
           {subtitle && (
             <p className="text-xs text-muted-foreground">{subtitle}</p>
           )}
@@ -52,9 +52,9 @@ export function StatsCard({
         <div className={cn(
           "flex h-12 w-12 items-center justify-center rounded-xl",
           variant === 'default' && "bg-secondary",
-          variant === 'primary' && "bg-primary/20",
-          variant === 'success' && "bg-success/20",
-          variant === 'warning' && "bg-warning/20"
+          variant === 'primary' && "bg-primary/10",
+          variant === 'success' && "bg-success/10",
+          variant === 'warning' && "bg-warning/10"
         )}>
           <Icon className={cn(
             "h-6 w-6",

@@ -15,11 +15,16 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['Cormorant Garamond', 'Georgia', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
+        olive: "hsl(var(--olive))",
+        "olive-light": "hsl(var(--olive-light))",
+        cream: "hsl(var(--cream))",
+        brown: "hsl(var(--brown))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {

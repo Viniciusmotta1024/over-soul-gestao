@@ -27,11 +27,11 @@ export function ChannelCard({ name, icon, orders, revenue, onClick, delay = 0 }:
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-secondary text-2xl group-hover:scale-110 transition-transform">
+        <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-2xl group-hover:bg-primary/20 transition-colors">
           {icon}
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+          <h3 className="font-medium text-foreground group-hover:text-primary transition-colors">
             {name}
           </h3>
           <p className="text-sm text-muted-foreground">
@@ -39,7 +39,7 @@ export function ChannelCard({ name, icon, orders, revenue, onClick, delay = 0 }:
           </p>
         </div>
         <div className="text-right">
-          <p className="text-lg font-bold text-primary">{formatCurrency(revenue)}</p>
+          <p className="text-lg font-serif font-semibold text-primary">{formatCurrency(revenue)}</p>
           <p className="text-xs text-muted-foreground">faturamento</p>
         </div>
       </div>

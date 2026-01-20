@@ -1,9 +1,71 @@
-import { Order, Supplier, SalesChannel } from '@/types';
+import { Order, Supplier, SalesChannel, Client } from '@/types';
+
+export const mockClients: Client[] = [
+  {
+    id: '1',
+    name: 'Maria Silva',
+    email: 'maria@email.com',
+    phone: '(11) 99999-1111',
+    address: 'Rua das Flores, 123',
+    city: 'São Paulo',
+    state: 'SP',
+    orders: 5,
+    totalSpent: 459.50,
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: '2',
+    name: 'João Pereira',
+    email: 'joao@email.com',
+    phone: '(21) 98888-2222',
+    address: 'Av. Brasil, 456',
+    city: 'Rio de Janeiro',
+    state: 'RJ',
+    orders: 2,
+    totalSpent: 259.80,
+    createdAt: new Date('2024-01-05'),
+  },
+  {
+    id: '3',
+    name: 'Ana Costa',
+    email: 'ana@email.com',
+    phone: '(31) 97777-3333',
+    city: 'Belo Horizonte',
+    state: 'MG',
+    orders: 8,
+    totalSpent: 720.00,
+    createdAt: new Date('2024-01-03'),
+  },
+  {
+    id: '4',
+    name: 'Igreja Batista Central',
+    email: 'contato@igrejabc.com.br',
+    phone: '(11) 3333-4444',
+    address: 'Rua da Igreja, 100',
+    city: 'São Paulo',
+    state: 'SP',
+    orders: 3,
+    totalSpent: 6750.00,
+    createdAt: new Date('2024-01-02'),
+  },
+  {
+    id: '5',
+    name: 'Igreja Metodista',
+    email: 'contato@metodista.com.br',
+    phone: '(21) 2222-5555',
+    city: 'Rio de Janeiro',
+    state: 'RJ',
+    orders: 2,
+    totalSpent: 3800.00,
+    createdAt: new Date('2024-01-08'),
+  },
+];
 
 export const mockOrders: Order[] = [
   {
     id: '1',
     customerName: 'Maria Silva',
+    customerId: '1',
     product: 'Camiseta Básica',
     size: 'M',
     quantity: 2,
@@ -16,6 +78,7 @@ export const mockOrders: Order[] = [
   {
     id: '2',
     customerName: 'Igreja Batista Central',
+    customerId: '4',
     product: 'Camiseta Personalizada',
     size: 'G',
     quantity: 50,
@@ -28,6 +91,7 @@ export const mockOrders: Order[] = [
   {
     id: '3',
     customerName: 'João Pereira',
+    customerId: '2',
     product: 'Moletom Premium',
     size: 'GG',
     quantity: 1,
@@ -40,6 +104,7 @@ export const mockOrders: Order[] = [
   {
     id: '4',
     customerName: 'Ana Costa',
+    customerId: '3',
     product: 'Camiseta Básica',
     size: 'P',
     quantity: 3,
@@ -52,6 +117,7 @@ export const mockOrders: Order[] = [
   {
     id: '5',
     customerName: 'Igreja Metodista',
+    customerId: '5',
     product: 'Kit Evento 100un',
     size: 'Variados',
     quantity: 100,
@@ -80,6 +146,7 @@ export const mockSuppliers: Supplier[] = [
     id: '1',
     name: 'Malhas Brasil',
     contact: '(11) 99999-1234',
+    email: 'vendas@malhasbrasil.com.br',
     products: [
       { name: 'Camiseta Básica', sizes: ['P', 'M', 'G', 'GG'], unitCost: 25.00 },
       { name: 'Camiseta Premium', sizes: ['P', 'M', 'G', 'GG'], unitCost: 35.00 },
@@ -90,6 +157,7 @@ export const mockSuppliers: Supplier[] = [
     id: '2',
     name: 'Tecidos & Cia',
     contact: '(11) 98888-5678',
+    email: 'contato@tecidosecia.com',
     products: [
       { name: 'Moletom Premium', sizes: ['P', 'M', 'G', 'GG', 'XG'], unitCost: 55.00 },
       { name: 'Moletom Básico', sizes: ['P', 'M', 'G', 'GG'], unitCost: 45.00 },
@@ -99,6 +167,7 @@ export const mockSuppliers: Supplier[] = [
     id: '3',
     name: 'Confecções Unity',
     contact: '(21) 97777-9012',
+    email: 'unity@confeccoes.com',
     products: [
       { name: 'Camiseta Personalizada', sizes: ['P', 'M', 'G', 'GG'], unitCost: 22.00 },
       { name: 'Kit Evento 100un', sizes: ['Variados'], unitCost: 20.00 },
