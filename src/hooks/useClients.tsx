@@ -45,9 +45,9 @@ export function useClients() {
       const { data, error } = await supabase
         .from('clients')
         .insert({
-          name: clientData.name,
+          name: clientData.name || 'Cliente sem nome',
           email: clientData.email || null,
-          phone: clientData.phone,
+          phone: clientData.phone || '',
           address: clientData.address || null,
           city: clientData.city || null,
           state: clientData.state || null,
@@ -89,9 +89,9 @@ export function useClients() {
       const { error } = await supabase
         .from('clients')
         .update({
-          name: client.name,
+          name: client.name || 'Cliente sem nome',
           email: client.email || null,
-          phone: client.phone,
+          phone: client.phone || '',
           address: client.address || null,
           city: client.city || null,
           state: client.state || null,
