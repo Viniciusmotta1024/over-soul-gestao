@@ -57,9 +57,9 @@ export type Database = {
           created_at: string
           email: string | null
           id: string
-          name: string
+          name: string | null
           orders_count: number
-          phone: string
+          phone: string | null
           state: string | null
           total_spent: number
           updated_at: string
@@ -70,9 +70,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
-          name: string
+          name?: string | null
           orders_count?: number
-          phone: string
+          phone?: string | null
           state?: string | null
           total_spent?: number
           updated_at?: string
@@ -83,9 +83,9 @@ export type Database = {
           created_at?: string
           email?: string | null
           id?: string
-          name?: string
+          name?: string | null
           orders_count?: number
-          phone?: string
+          phone?: string | null
           state?: string | null
           total_spent?: number
           updated_at?: string

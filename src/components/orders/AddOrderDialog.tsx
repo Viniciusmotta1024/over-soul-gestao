@@ -122,7 +122,7 @@ export function AddOrderDialog({ open, onOpenChange, clients, products, onAdd }:
               <SelectContent>
                 {clients.map((client) => (
                   <SelectItem key={client.id} value={client.id}>
-                    {client.name}
+                    {client.name || client.phone || 'Cliente sem identificação'}
                   </SelectItem>
                 ))}
               </SelectContent>
