@@ -698,7 +698,7 @@ const Index = () => {
         isAdmin={isAdmin}
       />
       
-      <main className="ml-64">
+      <main className="md:ml-64">
         <Header 
           title={title} 
           subtitle={subtitle}
@@ -712,11 +712,11 @@ const Index = () => {
             className="gap-2 text-muted-foreground hover:text-foreground"
           >
             <LogOut className="h-4 w-4" />
-            Sair
+            <span className="hidden md:inline">Sair</span>
           </Button>
         </Header>
         
-        <div className="p-8">
+        <div className="p-4 md:p-8">
           {renderContent()}
         </div>
       </main>
