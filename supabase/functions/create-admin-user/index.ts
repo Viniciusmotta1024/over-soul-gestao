@@ -11,20 +11,59 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { email, password, name } = await req.json();
-
-    if (!email || !password) {
-      return new Response(
-        JSON.stringify({ error: "Email and password are required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { action, email, password, name, userId, newEmail } = await req.json();
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
+
+    // Action: update-email - Update user email
+    if (action === "update-email") {
+      if (!userId || !newEmail) {
+        return new Response(
+          JSON.stringify({ error: "userId and newEmail are required" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Update auth.users email
+      const { error: authError } = await supabaseAdmin.auth.admin.updateUserById(userId, {
+        email: newEmail,
+        email_confirm: true,
+      });
+
+      if (authError) {
+        return new Response(
+          JSON.stringify({ error: authError.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Update profiles email
+      const { error: profileError } = await supabaseAdmin
+        .from("profiles")
+        .update({ email: newEmail })
+        .eq("user_id", userId);
+
+      if (profileError) {
+        console.error("Profile update error:", profileError);
+      }
+
+      return new Response(
+        JSON.stringify({ success: true, message: "Email updated successfully" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Action: create-admin (default) - Create first admin user
+    if (!email || !password) {
+      return new Response(
+        JSON.stringify({ error: "Email and password are required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Check if any admin exists
     const { data: existingAdmins } = await supabaseAdmin
@@ -68,7 +107,6 @@ Deno.serve(async (req) => {
     }
 
     // The trigger assign_first_admin should handle role assignment
-    // But let's verify and add if needed
     const { data: roleData } = await supabaseAdmin
       .from("user_roles")
       .select("id")
