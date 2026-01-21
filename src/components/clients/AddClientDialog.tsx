@@ -3,6 +3,7 @@ import { Client } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,13 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 
+const formatPhone = (value: string): string => {
+  const digits = value.replace(/\D/g, '').slice(0, 11);
+  if (digits.length <= 2) return digits.length ? `(${digits}` : '';
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+};
+
 interface AddClientDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -18,6 +26,7 @@ interface AddClientDialogProps {
 }
 
 export function AddClientDialog({ open, onOpenChange, onAdd }: AddClientDialogProps) {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -27,8 +36,21 @@ export function AddClientDialog({ open, onOpenChange, onAdd }: AddClientDialogPr
     state: '',
   });
 
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({ ...formData, phone: formatPhone(e.target.value) });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      toast({
+        title: "Atenção",
+        description: "Recomendamos preencher o nome do cliente.",
+        variant: "destructive",
+      });
+    }
+    
     onAdd(formData);
     setFormData({ name: '', email: '', phone: '', address: '', city: '', state: '' });
     onOpenChange(false);
@@ -69,7 +91,7 @@ export function AddClientDialog({ open, onOpenChange, onAdd }: AddClientDialogPr
               <Input
                 id="phone"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                onChange={handlePhoneChange}
                 placeholder="(00) 00000-0000"
                 className="bg-secondary/50"
               />
