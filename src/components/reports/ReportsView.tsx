@@ -28,6 +28,41 @@ export function ReportsView({ orders }: ReportsViewProps) {
   const totalProfit = totalRevenue - totalCost;
   const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
+  // Calculate month-over-month trends
+  const trends = useMemo(() => {
+    const now = new Date();
+    const currentMonthStart = startOfMonth(now);
+    const currentMonthEnd = endOfMonth(now);
+    const lastMonthStart = startOfMonth(subMonths(now, 1));
+    const lastMonthEnd = endOfMonth(subMonths(now, 1));
+
+    // Current month orders
+    const currentMonthOrders = orders.filter(o => 
+      isWithinInterval(o.createdAt, { start: currentMonthStart, end: currentMonthEnd })
+    );
+    const currentRevenue = currentMonthOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
+    const currentProfit = currentMonthOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
+
+    // Last month orders
+    const lastMonthOrders = orders.filter(o => 
+      isWithinInterval(o.createdAt, { start: lastMonthStart, end: lastMonthEnd })
+    );
+    const lastRevenue = lastMonthOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
+    const lastProfit = lastMonthOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
+
+    // Calculate percentage changes
+    const calcTrend = (current: number, previous: number) => {
+      if (previous === 0) return current > 0 ? { value: 100, isPositive: true } : null;
+      const change = ((current - previous) / previous) * 100;
+      return { value: Math.abs(parseFloat(change.toFixed(1))), isPositive: change >= 0 };
+    };
+
+    return {
+      revenue: calcTrend(currentRevenue, lastRevenue),
+      profit: calcTrend(currentProfit, lastProfit),
+    };
+  }, [orders]);
+
   // Orders by channel
   const channelData = [
     { name: 'Shopee', value: orders.filter(o => o.channel === 'shopee').length, revenue: orders.filter(o => o.channel === 'shopee').reduce((acc, o) => acc + o.salePrice * o.quantity, 0) },
@@ -97,7 +132,7 @@ export function ReportsView({ orders }: ReportsViewProps) {
           value={formatCurrency(totalRevenue)}
           icon={DollarSign}
           variant="primary"
-          trend={{ value: 12.5, isPositive: true }}
+          trend={trends.revenue || undefined}
           delay={0}
         />
         <StatsCard
@@ -112,7 +147,7 @@ export function ReportsView({ orders }: ReportsViewProps) {
           value={formatCurrency(totalProfit)}
           icon={TrendingUp}
           variant="success"
-          trend={{ value: 8.2, isPositive: true }}
+          trend={trends.profit || undefined}
           delay={200}
         />
         <StatsCard
