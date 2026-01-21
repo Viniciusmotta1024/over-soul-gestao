@@ -19,17 +19,17 @@ interface HeaderProps {
 
 export function Header({ title, subtitle, children, newOrdersCount = 0, onNotificationsClick }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-8">
-      <div>
-        <h1 className="text-2xl font-serif font-semibold text-foreground">{title}</h1>
+    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-background/95 backdrop-blur-sm px-4 md:px-8">
+      <div className="pl-12 md:pl-0">
+        <h1 className="text-xl md:text-2xl font-serif font-semibold text-foreground">{title}</h1>
         {subtitle && (
-          <p className="text-sm text-muted-foreground">{subtitle}</p>
+          <p className="text-xs md:text-sm text-muted-foreground">{subtitle}</p>
         )}
       </div>
 
-      <div className="flex items-center gap-4">
-        {/* Search */}
-        <div className="relative">
+      <div className="flex items-center gap-2 md:gap-4">
+        {/* Search - hidden on mobile */}
+        <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Buscar pedidos..."
@@ -70,8 +70,8 @@ export function Header({ title, subtitle, children, newOrdersCount = 0, onNotifi
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {/* User */}
-        <Button variant="ghost" size="icon" className="rounded-full">
+        {/* User - hidden on mobile */}
+        <Button variant="ghost" size="icon" className="rounded-full hidden md:flex">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 border border-primary/20">
             <User className="h-5 w-5 text-primary" />
           </div>
