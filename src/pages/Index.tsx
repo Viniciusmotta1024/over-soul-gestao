@@ -103,7 +103,7 @@ const Index = () => {
   const [deleteType, setDeleteType] = useState<'client' | 'supplier' | 'order' | 'product' | 'team'>('client');
   const [itemToDelete, setItemToDelete] = useState<Client | Supplier | Order | Product | null>(null);
 
-  // Filter orders
+// Filter orders
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
       if (orderFilters.status && order.status !== orderFilters.status) return false;
@@ -111,6 +111,8 @@ const Index = () => {
       if (orderFilters.clientId && order.customerId !== orderFilters.clientId) return false;
       if (orderFilters.dateFrom && isBefore(order.createdAt, startOfDay(orderFilters.dateFrom))) return false;
       if (orderFilters.dateTo && isAfter(order.createdAt, endOfDay(orderFilters.dateTo))) return false;
+      if (orderFilters.paymentStatus === 'paid' && !order.isPaid) return false;
+      if (orderFilters.paymentStatus === 'unpaid' && order.isPaid) return false;
       return true;
     });
   }, [orders, orderFilters]);

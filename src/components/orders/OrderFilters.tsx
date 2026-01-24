@@ -16,7 +16,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, X, Filter } from 'lucide-react';
+import { CalendarIcon, X, Filter, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,7 @@ export interface OrderFiltersState {
   status?: string;
   channel?: string;
   clientId?: string;
+  paymentStatus?: 'paid' | 'unpaid';
 }
 
 interface OrderFiltersProps {
@@ -153,7 +154,7 @@ export function OrderFilters({ clients, filters, onFiltersChange, onClear }: Ord
               </Select>
             </div>
 
-            {/* Client */}
+{/* Client */}
             <div className="space-y-2">
               <Label>Cliente</Label>
               <Select value={filters.clientId || 'all'} onValueChange={(v) => updateFilter('clientId', v)}>
@@ -167,6 +168,21 @@ export function OrderFilters({ clients, filters, onFiltersChange, onClear }: Ord
                       {client.name}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Payment Status */}
+            <div className="space-y-2">
+              <Label>Status de Pagamento</Label>
+              <Select value={filters.paymentStatus || 'all'} onValueChange={(v) => updateFilter('paymentStatus', v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="paid">💰 Pago</SelectItem>
+                  <SelectItem value="unpaid">⏳ Não Pago</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -209,10 +225,20 @@ export function OrderFilters({ clients, filters, onFiltersChange, onClear }: Ord
         </div>
       )}
 
-      {filters.dateTo && (
+{filters.dateTo && (
         <div className="flex items-center gap-1 px-2 py-1 bg-secondary rounded-md text-sm">
           <span>Até: {format(filters.dateTo, "dd/MM/yyyy", { locale: ptBR })}</span>
           <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => updateFilter('dateTo', undefined)}>
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+
+      {filters.paymentStatus && (
+        <div className="flex items-center gap-1 px-2 py-1 bg-secondary rounded-md text-sm">
+          <DollarSign className="h-3 w-3" />
+          <span>{filters.paymentStatus === 'paid' ? 'Pago' : 'Não Pago'}</span>
+          <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => updateFilter('paymentStatus', undefined)}>
             <X className="h-3 w-3" />
           </Button>
         </div>
