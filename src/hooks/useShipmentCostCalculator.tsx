@@ -27,6 +27,21 @@ export function useShipmentCostCalculator() {
     // Total de camisas na remessa
     const totalShirts = orders.reduce((sum, order) => sum + order.quantity, 0);
     
+    // Se não houver pedidos, retorna zeros
+    if (totalShirts === 0) {
+      return {
+        totalShirts: 0,
+        shirtsCost: 0,
+        shirtsFreight: 0,
+        dtfMeters: 0,
+        dtfCost: 0,
+        dtfFreight: 0,
+        totalCost: 0,
+        costPerShirt: 0,
+        shirtsPerMeter: SHIRTS_PER_METER,
+      };
+    }
+    
     // Metros de DTF necessários (1 metro = 3-4 camisas)
     const dtfMeters = Math.ceil(totalShirts / SHIRTS_PER_METER * 10) / 10; // Arredonda para 0.1
     
@@ -34,17 +49,14 @@ export function useShipmentCostCalculator() {
     const shirtFreight = freights.find(f => f.name.toLowerCase().includes('camisa'))?.price || 19.90;
     const dtfFreight = freights.find(f => f.name.toLowerCase().includes('dtf'))?.price || 12.59;
     
-    // Custo das camisas (usando custo médio ou do produto)
-    // Aqui usamos o custo de fornecedor dos pedidos
+    // Custo das camisas (usando custo de fornecedor dos pedidos)
     const shirtsCost = orders.reduce((sum, order) => sum + order.supplierCost * order.quantity, 0);
     
     // Custo do DTF baseado na metragem
     const dtfPricePerMeter = getDTFPrice(dtfMeters);
     const dtfCost = dtfMeters * dtfPricePerMeter;
     
-    // Custos de frete (proporcional à quantidade)
-    // Frete de camisas: geralmente por lote
-    // Frete de DTF: por envio
+    // Custos de frete
     const shirtsFreight = shirtFreight;
     const dtfFreightCost = dtfFreight;
     
@@ -52,7 +64,7 @@ export function useShipmentCostCalculator() {
     const totalCost = shirtsCost + shirtsFreight + dtfCost + dtfFreightCost;
     
     // Custo por camisa
-    const costPerShirt = totalShirts > 0 ? totalCost / totalShirts : 0;
+    const costPerShirt = totalCost / totalShirts;
 
     return {
       totalShirts,
