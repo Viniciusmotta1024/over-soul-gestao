@@ -13,6 +13,7 @@ import { ProductsTable } from '@/components/products/ProductsTable';
 import { ReportsView } from '@/components/reports/ReportsView';
 import { PricingCalculator } from '@/components/pricing/PricingCalculator';
 import { TeamTable } from '@/components/team/TeamTable';
+import { ShipmentsView } from '@/components/shipments/ShipmentsView';
 import { AddTeamMemberDialog } from '@/components/team/AddTeamMemberDialog';
 import { ActivityLogsDialog } from '@/components/settings/ActivityLogsDialog';
 import { PasswordRecoveryDialog } from '@/components/settings/PasswordRecoveryDialog';
@@ -44,6 +45,7 @@ import { useToast } from '@/hooks/use-toast';
 const pageConfig: Record<string, { title: string; subtitle: string }> = {
   dashboard: { title: 'Dashboard', subtitle: 'Visão geral dos seus pedidos e vendas' },
   orders: { title: 'Pedidos', subtitle: 'Gerenciar todos os pedidos' },
+  shipments: { title: 'Remessas', subtitle: 'Agrupe pedidos para reduzir custos' },
   products: { title: 'Produtos', subtitle: 'Gerenciar catálogo de produtos' },
   clients: { title: 'Clientes', subtitle: 'Gerenciar clientes e empresas' },
   suppliers: { title: 'Fornecedores', subtitle: 'Valores e produtos dos fornecedores' },
@@ -293,8 +295,17 @@ const Index = () => {
     setDeleteDialogOpen(true);
   };
 
-  const handleOrderStatusChange = async (order: Order, newStatus: Order['status']) => {
+const handleOrderStatusChange = async (order: Order, newStatus: Order['status']) => {
     const updatedOrder = { ...order, status: newStatus };
+    await updateOrder(updatedOrder);
+  };
+
+  const handlePaymentToggle = async (order: Order) => {
+    const updatedOrder = { 
+      ...order, 
+      isPaid: !order.isPaid,
+      paidAt: !order.isPaid ? new Date() : undefined
+    };
     await updateOrder(updatedOrder);
   };
 
@@ -519,13 +530,22 @@ const Index = () => {
                 </Button>
               </div>
             </div>
-            <OrdersTable 
+<OrdersTable 
               orders={filteredOrders} 
               onEdit={handleEditOrder}
               onDelete={handleDeleteOrder}
               onStatusChange={handleOrderStatusChange}
+              onPaymentToggle={handlePaymentToggle}
             />
           </div>
+        );
+
+      case 'shipments':
+        return (
+          <ShipmentsView 
+            orders={orders} 
+            onOrderUpdate={updateOrder}
+          />
         );
 
       case 'products':
@@ -610,12 +630,13 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            <OrdersTable 
+<OrdersTable 
               orders={orders} 
               filterChannel="shopee" 
               onEdit={handleEditOrder}
               onDelete={handleDeleteOrder}
               onStatusChange={handleOrderStatusChange}
+              onPaymentToggle={handlePaymentToggle}
             />
           </div>
         );
@@ -634,12 +655,13 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            <OrdersTable 
+<OrdersTable 
               orders={orders} 
               filterChannel="ministerio" 
               onEdit={handleEditOrder}
               onDelete={handleDeleteOrder}
               onStatusChange={handleOrderStatusChange}
+              onPaymentToggle={handlePaymentToggle}
             />
           </div>
         );

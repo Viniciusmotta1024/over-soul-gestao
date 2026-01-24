@@ -10,6 +10,9 @@ export interface Order {
   supplierCost: number;
   salePrice: number;
   createdAt: Date;
+  isPaid: boolean;
+  paidAt?: Date;
+  shipmentId?: string;
 }
 
 export interface Client {

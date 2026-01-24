@@ -99,9 +99,12 @@ export type Database = {
           created_at: string
           customer_name: string
           id: string
+          is_paid: boolean
+          paid_at: string | null
           product: string
           quantity: number
           sale_price: number
+          shipment_id: string | null
           size: string
           status: string
           supplier_cost: number
@@ -113,9 +116,12 @@ export type Database = {
           created_at?: string
           customer_name: string
           id?: string
+          is_paid?: boolean
+          paid_at?: string | null
           product: string
           quantity?: number
           sale_price: number
+          shipment_id?: string | null
           size: string
           status?: string
           supplier_cost: number
@@ -127,9 +133,12 @@ export type Database = {
           created_at?: string
           customer_name?: string
           id?: string
+          is_paid?: boolean
+          paid_at?: string | null
           product?: string
           quantity?: number
           sale_price?: number
+          shipment_id?: string | null
           size?: string
           status?: string
           supplier_cost?: number
@@ -141,6 +150,13 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_shipment_id_fkey"
+            columns: ["shipment_id"]
+            isOneToOne: false
+            referencedRelation: "shipments"
             referencedColumns: ["id"]
           },
         ]
@@ -353,6 +369,36 @@ export type Database = {
           shirt_price?: number
           shirt_type?: string
           suggested_price?: number
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      shipments: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          notes: string | null
+          status: string
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          notes?: string | null
+          status?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          notes?: string | null
+          status?: string
           total_cost?: number
           updated_at?: string
         }

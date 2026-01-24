@@ -10,7 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Eye, Edit, Trash2, ChevronLeft, ChevronRight, Check, X } from 'lucide-react';
+import { Eye, Edit, Trash2, ChevronLeft, ChevronRight, Check, X, DollarSign, Package } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -24,6 +24,7 @@ interface OrdersTableProps {
   onEdit: (order: Order) => void;
   onDelete: (order: Order) => void;
   onStatusChange?: (order: Order, newStatus: Order['status']) => void;
+  onPaymentToggle?: (order: Order) => void;
 }
 
 const statusConfig = {
@@ -41,7 +42,7 @@ const channelConfig = {
   site: { label: 'Site', icon: '🌐' },
 };
 
-export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onStatusChange }: OrdersTableProps) {
+export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onStatusChange, onPaymentToggle }: OrdersTableProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -100,7 +101,7 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onStatusC
   return (
     <div className="glass rounded-xl overflow-hidden animate-fade-in">
       <Table>
-        <TableHeader>
+<TableHeader>
           <TableRow className="border-border hover:bg-transparent">
             <TableHead className="text-muted-foreground">Canal</TableHead>
             <TableHead className="text-muted-foreground">Cliente</TableHead>
@@ -110,6 +111,8 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onStatusC
             <TableHead className="text-muted-foreground text-right">Custo</TableHead>
             <TableHead className="text-muted-foreground text-right">Venda</TableHead>
             <TableHead className="text-muted-foreground text-right">Lucro</TableHead>
+            <TableHead className="text-muted-foreground text-center">Pago</TableHead>
+            <TableHead className="text-muted-foreground">Remessa</TableHead>
             <TableHead className="text-muted-foreground">Status</TableHead>
             <TableHead className="text-muted-foreground text-right">Ações</TableHead>
           </TableRow>
@@ -153,8 +156,42 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onStatusC
                 <TableCell className="text-right font-medium text-foreground">
                   {formatCurrency(totalSale)}
                 </TableCell>
-                <TableCell className="text-right font-medium text-success">
+<TableCell className="text-right font-medium text-success">
                   +{formatCurrency(profit)}
+                </TableCell>
+                <TableCell className="text-center">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={cn(
+                            "h-7 w-7",
+                            order.isPaid 
+                              ? "text-success hover:text-success hover:bg-success/10" 
+                              : "text-muted-foreground hover:text-warning hover:bg-warning/10"
+                          )}
+                          onClick={() => onPaymentToggle?.(order)}
+                        >
+                          <DollarSign className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {order.isPaid ? 'Pago - Clique para desmarcar' : 'Não pago - Clique para marcar como pago'}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableCell>
+                <TableCell>
+                  {order.shipmentId ? (
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+                      <Package className="h-3 w-3 mr-1" />
+                      Em remessa
+                    </Badge>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">—</span>
+                  )}
                 </TableCell>
                 <TableCell>
                   <TooltipProvider>

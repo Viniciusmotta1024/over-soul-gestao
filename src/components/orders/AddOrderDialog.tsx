@@ -76,7 +76,7 @@ export function AddOrderDialog({ open, onOpenChange, clients, products, onAdd }:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.channel) {
-      onAdd({
+onAdd({
         customerName: formData.customerName,
         customerId: formData.customerId,
         product: formData.product,
@@ -86,6 +86,7 @@ export function AddOrderDialog({ open, onOpenChange, clients, products, onAdd }:
         status: formData.status,
         supplierCost: formData.supplierCost,
         salePrice: formData.salePrice,
+        isPaid: false,
       });
       setFormData({
         customerId: '',

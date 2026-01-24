@@ -10,7 +10,8 @@ import {
   ShoppingCart,
   Calculator,
   Menu,
-  X
+  X,
+  PackageCheck
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ interface SidebarProps {
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'orders', label: 'Pedidos', icon: Package },
+  { id: 'shipments', label: 'Remessas', icon: PackageCheck },
   { id: 'products', label: 'Produtos', icon: ShoppingCart },
   { id: 'clients', label: 'Clientes', icon: Users },
   { id: 'suppliers', label: 'Fornecedores', icon: Truck },
