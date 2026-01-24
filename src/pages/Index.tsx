@@ -297,10 +297,6 @@ const Index = () => {
     setDeleteDialogOpen(true);
   };
 
-const handleOrderStatusChange = async (order: Order, newStatus: Order['status']) => {
-    const updatedOrder = { ...order, status: newStatus };
-    await updateOrder(updatedOrder);
-  };
 
   const handlePaymentToggle = async (order: Order) => {
     const updatedOrder = { 
@@ -536,7 +532,6 @@ const handleOrderStatusChange = async (order: Order, newStatus: Order['status'])
               orders={filteredOrders} 
               onEdit={handleEditOrder}
               onDelete={handleDeleteOrder}
-              onStatusChange={handleOrderStatusChange}
               onPaymentToggle={handlePaymentToggle}
             />
           </div>
@@ -547,6 +542,7 @@ const handleOrderStatusChange = async (order: Order, newStatus: Order['status'])
           <ShipmentsView 
             orders={orders} 
             onOrderUpdate={updateOrder}
+            onRefreshOrders={refetchOrders}
           />
         );
 
@@ -637,7 +633,6 @@ const handleOrderStatusChange = async (order: Order, newStatus: Order['status'])
               filterChannel="shopee" 
               onEdit={handleEditOrder}
               onDelete={handleDeleteOrder}
-              onStatusChange={handleOrderStatusChange}
               onPaymentToggle={handlePaymentToggle}
             />
           </div>
@@ -662,7 +657,6 @@ const handleOrderStatusChange = async (order: Order, newStatus: Order['status'])
               filterChannel="ministerio" 
               onEdit={handleEditOrder}
               onDelete={handleDeleteOrder}
-              onStatusChange={handleOrderStatusChange}
               onPaymentToggle={handlePaymentToggle}
             />
           </div>

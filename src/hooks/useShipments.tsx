@@ -153,6 +153,13 @@ export function useShipments() {
 
       if (error) throw error;
 
+      // Update local shipment order count
+      setShipments(prev => prev.map(s => 
+        s.id === shipmentId 
+          ? { ...s, orderCount: (s.orderCount || 0) + 1 }
+          : s
+      ));
+
       toast({ title: 'Pedido adicionado', description: 'Pedido adicionado à remessa.' });
     } catch (error) {
       console.error('Error adding order to shipment:', error);
@@ -161,7 +168,7 @@ export function useShipments() {
     }
   };
 
-  const removeOrderFromShipment = async (orderId: string) => {
+  const removeOrderFromShipment = async (orderId: string, shipmentId?: string) => {
     try {
       const { error } = await supabase
         .from('orders')
@@ -169,6 +176,15 @@ export function useShipments() {
         .eq('id', orderId);
 
       if (error) throw error;
+
+      // Update local shipment order count
+      if (shipmentId) {
+        setShipments(prev => prev.map(s => 
+          s.id === shipmentId 
+            ? { ...s, orderCount: Math.max(0, (s.orderCount || 1) - 1) }
+            : s
+        ));
+      }
 
       toast({ title: 'Pedido removido', description: 'Pedido removido da remessa.' });
     } catch (error) {
