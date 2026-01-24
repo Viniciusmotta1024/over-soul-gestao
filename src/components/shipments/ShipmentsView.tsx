@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Package, Plus, Truck, CheckCircle, Clock, Archive, Trash2, Eye, AlertTriangle } from 'lucide-react';
+import { Package, Plus, Truck, CheckCircle, Clock, Archive, Trash2, Eye, AlertTriangle, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,7 @@ import { Order } from '@/types';
 import { AddShipmentDialog } from './AddShipmentDialog';
 import { ShipmentDetailsDialog } from './ShipmentDetailsDialog';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
+import { useShipmentCostCalculator } from '@/hooks/useShipmentCostCalculator';
 import { differenceInDays } from 'date-fns';
 
 interface ShipmentsViewProps {
@@ -26,6 +27,7 @@ const statusConfig: Record<Shipment['status'], { label: string; icon: typeof Clo
 
 export function ShipmentsView({ orders, onOrderUpdate, onRefreshOrders }: ShipmentsViewProps) {
   const { shipments, addShipment, updateShipment, deleteShipment, addOrderToShipment, removeOrderFromShipment, refetch } = useShipments();
+  const { calculateShipmentCost, formatCurrency } = useShipmentCostCalculator();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
@@ -64,8 +66,12 @@ export function ShipmentsView({ orders, onOrderUpdate, onRefreshOrders }: Shipme
     return orders.filter(o => (o as any).shipmentId === shipmentId);
   };
 
-const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  // Calculate shipment financial summary
+  const getShipmentFinancials = (shipmentOrders: Order[]) => {
+    const cost = calculateShipmentCost(shipmentOrders);
+    const revenue = shipmentOrders.reduce((sum, o) => sum + o.salePrice * o.quantity, 0);
+    const profit = revenue - cost.totalCost;
+    return { cost, revenue, profit };
   };
 
   // Check for old open shipments (more than 3 days)
@@ -117,6 +123,7 @@ return (
         {shipments.map((shipment) => {
           const StatusIcon = statusConfig[shipment.status].icon;
           const shipmentOrders = getOrdersForShipment(shipment.id);
+          const financials = getShipmentFinancials(shipmentOrders);
           
           return (
             <Card key={shipment.id} className="relative">
@@ -152,13 +159,36 @@ return (
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div>
                     <span className="text-muted-foreground">Pedidos:</span>
-                    <span className="ml-1 font-medium">{shipment.orderCount || 0}</span>
+                    <span className="ml-1 font-medium">{shipmentOrders.length}</span>
                   </div>
                   <div>
-                    <span className="text-muted-foreground">Custo:</span>
-                    <span className="ml-1 font-medium">{formatCurrency(shipment.totalCost)}</span>
+                    <span className="text-muted-foreground">Custo Real:</span>
+                    <span className="ml-1 font-medium">{formatCurrency(financials.cost.totalCost)}</span>
                   </div>
                 </div>
+
+                {/* Financial summary */}
+                {shipmentOrders.length > 0 && (
+                  <div className="p-2 rounded-md bg-muted/50 space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">DTF:</span>
+                      <span>{financials.cost.dtfMeters.toFixed(1)}m</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Receita:</span>
+                      <span>{formatCurrency(financials.revenue)}</span>
+                    </div>
+                    <div className="flex justify-between font-medium">
+                      <span className="flex items-center gap-1">
+                        <TrendingUp className="h-3 w-3" />
+                        Lucro Estimado:
+                      </span>
+                      <span className={financials.profit >= 0 ? 'text-success' : 'text-destructive'}>
+                        {formatCurrency(financials.profit)}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {shipment.notes && (
                   <p className="text-sm text-muted-foreground line-clamp-2">{shipment.notes}</p>

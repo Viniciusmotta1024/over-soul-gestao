@@ -36,6 +36,7 @@ import { useClients } from '@/hooks/useClients';
 import { useSuppliers } from '@/hooks/useSuppliers';
 import { useOrders } from '@/hooks/useOrders';
 import { useProducts } from '@/hooks/useProducts';
+import { useShipments } from '@/hooks/useShipments';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -62,6 +63,7 @@ const Index = () => {
   const { suppliers, loading: suppliersLoading, addSupplier, updateSupplier, deleteSupplier } = useSuppliers();
   const { orders, loading: ordersLoading, addOrder, updateOrder, deleteOrder, refetch: refetchOrders } = useOrders();
   const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, updateProductsOrder } = useProducts();
+  const { shipments, refetch: refetchShipments } = useShipments();
   const { newOrdersCount, clearNotifications } = useOrderNotifications();
   const { isAdmin, teamMembers, createUser, updateUserRole, removeUser } = useUserRoles();
   const { toast } = useToast();
@@ -280,6 +282,10 @@ const Index = () => {
   // Order handlers
   const handleAddOrder = async (orderData: Omit<Order, 'id' | 'createdAt'>) => {
     await addOrder(orderData);
+    // Refresh shipments if order was added to one
+    if (orderData.shipmentId) {
+      refetchShipments();
+    }
   };
 
   const handleEditOrder = (order: Order) => {
@@ -771,6 +777,7 @@ const Index = () => {
         onOpenChange={setAddOrderOpen}
         clients={clients}
         products={products}
+        shipments={shipments}
         onAdd={handleAddOrder}
       />
       <EditOrderDialog
