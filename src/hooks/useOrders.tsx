@@ -18,7 +18,7 @@ export function useOrders() {
 
       if (error) throw error;
 
-      const mappedOrders: Order[] = (data || []).map(o => ({
+const mappedOrders: Order[] = (data || []).map(o => ({
         id: o.id,
         customerName: o.customer_name,
         customerId: o.client_id || undefined,
@@ -30,6 +30,9 @@ export function useOrders() {
         supplierCost: Number(o.supplier_cost),
         salePrice: Number(o.sale_price),
         createdAt: new Date(o.created_at),
+        isPaid: o.is_paid,
+        paidAt: o.paid_at ? new Date(o.paid_at) : undefined,
+        shipmentId: o.shipment_id || undefined,
       }));
 
       setOrders(mappedOrders);
@@ -80,7 +83,7 @@ export function useOrders() {
         }
       }
 
-      const newOrder: Order = {
+const newOrder: Order = {
         id: data.id,
         customerName: data.customer_name,
         customerId: data.client_id || undefined,
@@ -92,6 +95,9 @@ export function useOrders() {
         supplierCost: Number(data.supplier_cost),
         salePrice: Number(data.sale_price),
         createdAt: new Date(data.created_at),
+        isPaid: data.is_paid,
+        paidAt: data.paid_at ? new Date(data.paid_at) : undefined,
+        shipmentId: data.shipment_id || undefined,
       };
 
       setOrders(prev => [newOrder, ...prev]);
@@ -117,7 +123,7 @@ export function useOrders() {
     const statusChanged = previousOrder && previousOrder.status !== order.status;
     
     try {
-      const { error } = await supabase
+const { error } = await supabase
         .from('orders')
         .update({
           customer_name: order.customerName,
@@ -129,6 +135,9 @@ export function useOrders() {
           status: order.status,
           supplier_cost: order.supplierCost,
           sale_price: order.salePrice,
+          is_paid: order.isPaid,
+          paid_at: order.paidAt?.toISOString() || null,
+          shipment_id: order.shipmentId || null,
         })
         .eq('id', order.id);
 
