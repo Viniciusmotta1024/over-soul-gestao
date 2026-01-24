@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Order, Client, Product } from '@/types';
+import { Shipment } from '@/hooks/useShipments';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,12 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Package } from 'lucide-react';
 
 interface AddOrderDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   clients: Client[];
   products: Product[];
+  shipments?: Shipment[];
   onAdd: (order: Omit<Order, 'id' | 'createdAt'>) => void;
 }
 
@@ -32,7 +35,7 @@ const channels = [
   { id: 'site', name: 'Site Próprio', icon: '🌐' },
 ];
 
-export function AddOrderDialog({ open, onOpenChange, clients, products, onAdd }: AddOrderDialogProps) {
+export function AddOrderDialog({ open, onOpenChange, clients, products, shipments = [], onAdd }: AddOrderDialogProps) {
   const [formData, setFormData] = useState({
     customerId: '',
     customerName: '',
@@ -43,12 +46,16 @@ export function AddOrderDialog({ open, onOpenChange, clients, products, onAdd }:
     supplierCost: 0,
     salePrice: 0,
     status: 'pending' as Order['status'],
+    shipmentId: '',
   });
 
   const [availableSizes, setAvailableSizes] = useState<string[]>([]);
 
   // Filter only active products
   const activeProducts = products.filter(p => p.isActive);
+  
+  // Filter only open shipments
+  const openShipments = shipments.filter(s => s.status === 'open');
 
   const handleClientChange = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
@@ -76,7 +83,7 @@ export function AddOrderDialog({ open, onOpenChange, clients, products, onAdd }:
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.channel) {
-onAdd({
+      onAdd({
         customerName: formData.customerName,
         customerId: formData.customerId,
         product: formData.product,
@@ -87,6 +94,7 @@ onAdd({
         supplierCost: formData.supplierCost,
         salePrice: formData.salePrice,
         isPaid: false,
+        shipmentId: formData.shipmentId || undefined,
       });
       setFormData({
         customerId: '',
@@ -98,6 +106,7 @@ onAdd({
         supplierCost: 0,
         salePrice: 0,
         status: 'pending',
+        shipmentId: '',
       });
       setAvailableSizes([]);
       onOpenChange(false);
@@ -238,6 +247,43 @@ onAdd({
               />
             </div>
           </div>
+
+          {/* Shipment Selection (Optional) */}
+          {openShipments.length > 0 && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Adicionar à Remessa (Opcional)
+              </Label>
+              <Select 
+                value={formData.shipmentId} 
+                onValueChange={(v) => setFormData({ ...formData, shipmentId: v === 'none' ? '' : v })}
+              >
+                <SelectTrigger className="bg-secondary/50">
+                  <SelectValue placeholder="Selecione uma remessa aberta" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    <span className="text-muted-foreground">Nenhuma remessa</span>
+                  </SelectItem>
+                  {openShipments.map((shipment) => (
+                    <SelectItem key={shipment.id} value={shipment.id}>
+                      <span className="flex items-center gap-2">
+                        <Package className="h-3 w-3" />
+                        {shipment.name}
+                        <span className="text-muted-foreground text-xs">
+                          ({shipment.orderCount || 0} pedidos)
+                        </span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Vincule este pedido a uma remessa existente para otimizar custos de fabricação.
+              </p>
+            </div>
+          )}
 
           {/* Profit Preview */}
           {formData.salePrice > 0 && (

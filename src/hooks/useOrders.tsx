@@ -58,6 +58,7 @@ const mappedOrders: Order[] = (data || []).map(o => ({
           status: orderData.status,
           supplier_cost: orderData.supplierCost,
           sale_price: orderData.salePrice,
+          shipment_id: orderData.shipmentId || null,
         })
         .select()
         .single();

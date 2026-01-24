@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Minus, DollarSign, Package } from 'lucide-react';
+import { Plus, Minus, DollarSign, Package, Calculator, Info } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,8 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Shipment } from '@/hooks/useShipments';
 import { Order } from '@/types';
+import { useShipmentCostCalculator } from '@/hooks/useShipmentCostCalculator';
 
 interface ShipmentDetailsDialogProps {
   open: boolean;
@@ -39,32 +42,33 @@ export function ShipmentDetailsDialog({
 }: ShipmentDetailsDialogProps) {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const { calculateShipmentCost, formatCurrency, SHIRTS_PER_METER } = useShipmentCostCalculator();
 
   // Orders in this shipment
   const shipmentOrders = orders.filter(o => (o as any).shipmentId === shipment.id);
+  
+  // Calculate real shipment cost
+  const costBreakdown = calculateShipmentCost(shipmentOrders);
   
   // Available orders (not in any shipment, pending status)
   const availableOrders = orders.filter(
     o => !(o as any).shipmentId && o.status === 'pending'
   );
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
-
   const handleAddSelected = async () => {
     setLoading(true);
     try {
-      const addedOrders = orders.filter(o => selectedOrders.includes(o.id));
-      const addedCost = addedOrders.reduce((sum, o) => sum + o.supplierCost * o.quantity, 0);
-      
       for (const orderId of selectedOrders) {
         await onAddOrder(orderId, shipment.id);
       }
       setSelectedOrders([]);
       
+      // Recalculate cost with new orders
+      const updatedOrders = [...shipmentOrders, ...orders.filter(o => selectedOrders.includes(o.id))];
+      const newCost = calculateShipmentCost(updatedOrders);
+      
       // Update total cost
-      onShipmentUpdate({ ...shipment, totalCost: shipment.totalCost + addedCost });
+      onShipmentUpdate({ ...shipment, totalCost: newCost.totalCost });
       
       // Refresh orders to reflect changes
       onRefreshOrders();
@@ -74,14 +78,17 @@ export function ShipmentDetailsDialog({
   };
 
   const handleRemoveOrder = async (orderId: string) => {
-    const order = orders.find(o => o.id === orderId);
     await onRemoveOrder(orderId, shipment.id);
-    if (order) {
-      onShipmentUpdate({ 
-        ...shipment, 
-        totalCost: Math.max(0, shipment.totalCost - order.supplierCost * order.quantity) 
-      });
-    }
+    
+    // Recalculate cost without removed order
+    const remainingOrders = shipmentOrders.filter(o => o.id !== orderId);
+    const newCost = calculateShipmentCost(remainingOrders);
+    
+    onShipmentUpdate({ 
+      ...shipment, 
+      totalCost: newCost.totalCost
+    });
+    
     // Refresh orders to reflect changes
     onRefreshOrders();
   };
@@ -94,8 +101,6 @@ export function ShipmentDetailsDialog({
     );
   };
 
-  const totalShipmentCost = shipmentOrders.reduce((sum, o) => sum + o.supplierCost * o.quantity, 0);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
@@ -106,10 +111,72 @@ export function ShipmentDetailsDialog({
           </DialogTitle>
         </DialogHeader>
 
+        {/* Cost Breakdown Card */}
+        <Card className="bg-muted/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Calculator className="h-4 w-4" />
+              Custo Real de Fabricação
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs">
+                    <p>Calcula o custo considerando que 1 metro de DTF produz {SHIRTS_PER_METER} camisas em média.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <span className="text-muted-foreground block">Total de Camisas</span>
+                <span className="text-lg font-semibold">{costBreakdown.totalShirts}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block">Metros DTF</span>
+                <span className="text-lg font-semibold">{costBreakdown.dtfMeters.toFixed(1)}m</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block">Custo por Camisa</span>
+                <span className="text-lg font-semibold text-primary">{formatCurrency(costBreakdown.costPerShirt)}</span>
+              </div>
+              <div>
+                <span className="text-muted-foreground block">Custo Total</span>
+                <span className="text-lg font-semibold text-primary">{formatCurrency(costBreakdown.totalCost)}</span>
+              </div>
+            </div>
+            
+            {/* Detailed breakdown */}
+            {shipmentOrders.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-border space-y-1 text-xs text-muted-foreground">
+                <div className="flex justify-between">
+                  <span>Camisas ({costBreakdown.totalShirts}x)</span>
+                  <span>{formatCurrency(costBreakdown.shirtsCost)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Frete Camisas</span>
+                  <span>{formatCurrency(costBreakdown.shirtsFreight)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>DTF ({costBreakdown.dtfMeters.toFixed(1)}m)</span>
+                  <span>{formatCurrency(costBreakdown.dtfCost)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Frete DTF</span>
+                  <span>{formatCurrency(costBreakdown.dtfFreight)}</span>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="flex gap-4 mb-4">
           <Badge variant="outline" className="text-lg py-1 px-3">
             <DollarSign className="h-4 w-4 mr-1" />
-            Custo Total: {formatCurrency(totalShipmentCost)}
+            Custo: {formatCurrency(costBreakdown.totalCost)}
           </Badge>
           <Badge variant="secondary" className="text-lg py-1 px-3">
             {shipmentOrders.length} pedido(s)
@@ -135,7 +202,7 @@ export function ShipmentDetailsDialog({
                     <TableHead>Produto</TableHead>
                     <TableHead>Tamanho</TableHead>
                     <TableHead>Qtd</TableHead>
-                    <TableHead>Custo</TableHead>
+                    <TableHead>Custo Unit.</TableHead>
                     <TableHead>Ação</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -146,7 +213,7 @@ export function ShipmentDetailsDialog({
                       <TableCell>{order.product}</TableCell>
                       <TableCell>{order.size}</TableCell>
                       <TableCell>{order.quantity}</TableCell>
-                      <TableCell>{formatCurrency(order.supplierCost * order.quantity)}</TableCell>
+                      <TableCell>{formatCurrency(order.supplierCost)}</TableCell>
                       <TableCell>
                         <Button 
                           variant="ghost" 
@@ -195,7 +262,7 @@ export function ShipmentDetailsDialog({
                       <TableHead>Produto</TableHead>
                       <TableHead>Tamanho</TableHead>
                       <TableHead>Qtd</TableHead>
-                      <TableHead>Custo</TableHead>
+                      <TableHead>Custo Unit.</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -211,7 +278,7 @@ export function ShipmentDetailsDialog({
                         <TableCell>{order.product}</TableCell>
                         <TableCell>{order.size}</TableCell>
                         <TableCell>{order.quantity}</TableCell>
-                        <TableCell>{formatCurrency(order.supplierCost * order.quantity)}</TableCell>
+                        <TableCell>{formatCurrency(order.supplierCost)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
