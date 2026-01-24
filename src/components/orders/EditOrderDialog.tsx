@@ -17,6 +17,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Package } from 'lucide-react';
+import { Shipment } from '@/hooks/useShipments';
 
 interface EditOrderDialogProps {
   open: boolean;
@@ -24,6 +26,7 @@ interface EditOrderDialogProps {
   order: Order | null;
   clients: Client[];
   products: Product[];
+  shipments: Shipment[];
   onSave: (order: Order) => void;
 }
 
@@ -33,14 +36,7 @@ const channels = [
   { id: 'site', name: 'Site Próprio', icon: '🌐' },
 ];
 
-const statuses = [
-  { id: 'pending', name: 'Pendente' },
-  { id: 'processing', name: 'Processando' },
-  { id: 'completed', name: 'Concluído' },
-  { id: 'cancelled', name: 'Cancelado' },
-];
-
-export function EditOrderDialog({ open, onOpenChange, order, clients, products, onSave }: EditOrderDialogProps) {
+export function EditOrderDialog({ open, onOpenChange, order, clients, products, shipments, onSave }: EditOrderDialogProps) {
   const [formData, setFormData] = useState({
     customerId: '',
     customerName: '',
@@ -48,9 +44,9 @@ export function EditOrderDialog({ open, onOpenChange, order, clients, products, 
     size: '',
     quantity: 1,
     channel: '' as Order['channel'],
-    status: 'pending' as Order['status'],
     supplierCost: 0,
     salePrice: 0,
+    shipmentId: '',
   });
 
   const [availableSizes, setAvailableSizes] = useState<string[]>([]);
@@ -58,6 +54,9 @@ export function EditOrderDialog({ open, onOpenChange, order, clients, products, 
 
   // Filter only active products
   const activeProducts = products.filter(p => p.isActive);
+  
+  // Filter only open shipments
+  const openShipments = shipments.filter(s => s.status === 'open');
 
   useEffect(() => {
     if (order) {
@@ -68,9 +67,9 @@ export function EditOrderDialog({ open, onOpenChange, order, clients, products, 
         size: order.size,
         quantity: order.quantity,
         channel: order.channel,
-        status: order.status,
         supplierCost: order.supplierCost,
         salePrice: order.salePrice,
+        shipmentId: order.shipmentId || '',
       });
       
       // Find the product and its sizes
@@ -112,6 +111,7 @@ export function EditOrderDialog({ open, onOpenChange, order, clients, products, 
       onSave({
         ...order,
         ...formData,
+        status: order.status, // Keep existing status
       });
       onOpenChange(false);
     }
@@ -143,41 +143,24 @@ export function EditOrderDialog({ open, onOpenChange, order, clients, products, 
             </Select>
           </div>
 
-          {/* Channel and Status */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Canal de Venda *</Label>
-              <Select value={formData.channel} onValueChange={(v) => setFormData({ ...formData, channel: v as Order['channel'] })}>
-                <SelectTrigger className="bg-secondary/50">
-                  <SelectValue placeholder="Selecione o canal" />
-                </SelectTrigger>
-                <SelectContent>
-                  {channels.map((channel) => (
-                    <SelectItem key={channel.id} value={channel.id}>
-                      <span className="flex items-center gap-2">
-                        <span>{channel.icon}</span>
-                        {channel.name}
-                      </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Status *</Label>
-              <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as Order['status'] })}>
-                <SelectTrigger className="bg-secondary/50">
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {statuses.map((status) => (
-                    <SelectItem key={status.id} value={status.id}>
-                      {status.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Channel */}
+          <div className="space-y-2">
+            <Label>Canal de Venda *</Label>
+            <Select value={formData.channel} onValueChange={(v) => setFormData({ ...formData, channel: v as Order['channel'] })}>
+              <SelectTrigger className="bg-secondary/50">
+                <SelectValue placeholder="Selecione o canal" />
+              </SelectTrigger>
+              <SelectContent>
+                {channels.map((channel) => (
+                  <SelectItem key={channel.id} value={channel.id}>
+                    <span className="flex items-center gap-2">
+                      <span>{channel.icon}</span>
+                      {channel.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Product Selection */}
@@ -266,6 +249,44 @@ export function EditOrderDialog({ open, onOpenChange, order, clients, products, 
                 required
               />
             </div>
+          </div>
+
+          {/* Shipment Selection */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Remessa (Opcional)
+            </Label>
+            <Select 
+              value={formData.shipmentId || 'none'} 
+              onValueChange={(v) => setFormData({ ...formData, shipmentId: v === 'none' ? '' : v })}
+            >
+              <SelectTrigger className="bg-secondary/50">
+                <SelectValue placeholder="Selecione uma remessa" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border border-border z-50">
+                <SelectItem value="none">
+                  <span className="text-muted-foreground">Nenhuma remessa</span>
+                </SelectItem>
+                {openShipments.map((shipment) => (
+                  <SelectItem key={shipment.id} value={shipment.id}>
+                    <span className="flex items-center gap-2">
+                      <Package className="h-3 w-3" />
+                      {shipment.name}
+                      <span className="text-muted-foreground text-xs">
+                        ({shipment.orderCount || 0} pedidos)
+                      </span>
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {openShipments.length === 0 
+                ? "Nenhuma remessa aberta disponível."
+                : "Vincule este pedido a uma remessa para otimizar custos."
+              }
+            </p>
           </div>
 
           {/* Profit Preview */}
