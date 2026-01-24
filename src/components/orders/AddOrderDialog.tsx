@@ -249,41 +249,43 @@ export function AddOrderDialog({ open, onOpenChange, clients, products, shipment
           </div>
 
           {/* Shipment Selection (Optional) */}
-          {openShipments.length > 0 && (
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Package className="h-4 w-4" />
-                Adicionar à Remessa (Opcional)
-              </Label>
-              <Select 
-                value={formData.shipmentId} 
-                onValueChange={(v) => setFormData({ ...formData, shipmentId: v === 'none' ? '' : v })}
-              >
-                <SelectTrigger className="bg-secondary/50">
-                  <SelectValue placeholder="Selecione uma remessa aberta" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">
-                    <span className="text-muted-foreground">Nenhuma remessa</span>
-                  </SelectItem>
-                  {openShipments.map((shipment) => (
-                    <SelectItem key={shipment.id} value={shipment.id}>
-                      <span className="flex items-center gap-2">
-                        <Package className="h-3 w-3" />
-                        {shipment.name}
-                        <span className="text-muted-foreground text-xs">
-                          ({shipment.orderCount || 0} pedidos)
-                        </span>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Adicionar à Remessa (Opcional)
+            </Label>
+            <Select 
+              value={formData.shipmentId} 
+              onValueChange={(v) => setFormData({ ...formData, shipmentId: v === 'none' ? '' : v })}
+              disabled={openShipments.length === 0}
+            >
+              <SelectTrigger className="bg-secondary/50">
+                <SelectValue placeholder={openShipments.length === 0 ? "Nenhuma remessa aberta" : "Selecione uma remessa"} />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border border-border z-50">
+                <SelectItem value="none">
+                  <span className="text-muted-foreground">Nenhuma remessa</span>
+                </SelectItem>
+                {openShipments.map((shipment) => (
+                  <SelectItem key={shipment.id} value={shipment.id}>
+                    <span className="flex items-center gap-2">
+                      <Package className="h-3 w-3" />
+                      {shipment.name}
+                      <span className="text-muted-foreground text-xs">
+                        ({shipment.orderCount || 0} pedidos)
                       </span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Vincule este pedido a uma remessa existente para otimizar custos de fabricação.
-              </p>
-            </div>
-          )}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              {openShipments.length === 0 
+                ? "Crie uma remessa na aba 'Remessas' para vincular pedidos."
+                : "Vincule este pedido a uma remessa existente para otimizar custos de fabricação."
+              }
+            </p>
+          </div>
 
           {/* Profit Preview */}
           {formData.salePrice > 0 && (
