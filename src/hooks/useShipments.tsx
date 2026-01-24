@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { activityLogger } from '@/services/activityLogger';
@@ -14,12 +14,15 @@ export interface Shipment {
   orderCount?: number;
 }
 
+// Initial state loaded synchronously to prevent flash
+let initialShipmentsCache: Shipment[] | null = null;
+
 export function useShipments() {
-  const [shipments, setShipments] = useState<Shipment[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [shipments, setShipments] = useState<Shipment[]>(initialShipmentsCache || []);
+  const [loading, setLoading] = useState(initialShipmentsCache === null);
   const { toast } = useToast();
 
-  const fetchShipments = async () => {
+  const fetchShipments = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('shipments')
@@ -52,6 +55,8 @@ export function useShipments() {
         orderCount: countMap.get(s.id) || 0,
       }));
 
+      // Update cache
+      initialShipmentsCache = mappedShipments;
       setShipments(mappedShipments);
     } catch (error) {
       console.error('Error fetching shipments:', error);
@@ -59,7 +64,7 @@ export function useShipments() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const addShipment = async (shipmentData: { name: string; notes?: string }) => {
     try {
@@ -86,6 +91,7 @@ export function useShipments() {
       };
 
       setShipments(prev => [newShipment, ...prev]);
+      initialShipmentsCache = [newShipment, ...(initialShipmentsCache || [])];
       toast({ title: 'Remessa criada', description: `Remessa "${newShipment.name}" foi criada com sucesso.` });
       
       activityLogger.log('create', 'shipment', newShipment.id, newShipment.name);
@@ -113,6 +119,9 @@ export function useShipments() {
       if (error) throw error;
 
       setShipments(prev => prev.map(s => s.id === shipment.id ? shipment : s));
+      if (initialShipmentsCache) {
+        initialShipmentsCache = initialShipmentsCache.map(s => s.id === shipment.id ? shipment : s);
+      }
       toast({ title: 'Remessa atualizada', description: 'Remessa atualizada com sucesso.' });
       
       activityLogger.log('update', 'shipment', shipment.id, shipment.name);
@@ -134,6 +143,9 @@ export function useShipments() {
       if (error) throw error;
 
       setShipments(prev => prev.filter(s => s.id !== shipmentId));
+      if (initialShipmentsCache) {
+        initialShipmentsCache = initialShipmentsCache.filter(s => s.id !== shipmentId);
+      }
       toast({ title: 'Remessa excluída', description: 'Remessa removida com sucesso.' });
       
       activityLogger.log('delete', 'shipment', shipmentId, shipment?.name);
@@ -196,7 +208,7 @@ export function useShipments() {
 
   useEffect(() => {
     fetchShipments();
-  }, []);
+  }, [fetchShipments]);
 
   return { 
     shipments, 

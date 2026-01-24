@@ -1,17 +1,11 @@
 import { Order } from '@/types';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { DollarSign, CheckCircle } from 'lucide-react';
 
 interface RecentOrdersProps {
   orders: Order[];
 }
-
-const statusConfig = {
-  pending: { label: 'Pendente', className: 'bg-warning/10 text-warning border-warning/30' },
-  processing: { label: 'Processando', className: 'bg-info/10 text-info border-info/30' },
-  completed: { label: 'Concluído', className: 'bg-success/10 text-success border-success/30' },
-  cancelled: { label: 'Cancelado', className: 'bg-destructive/10 text-destructive border-destructive/30' },
-};
 
 const channelConfig = {
   shopee: { label: 'Shopee', icon: '🛒' },
@@ -36,7 +30,6 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
 
       <div className="space-y-3">
         {orders.slice(0, 5).map((order, index) => {
-          const status = statusConfig[order.status];
           const channel = channelConfig[order.channel];
           const profit = (order.salePrice - order.supplierCost) * order.quantity;
 
@@ -64,8 +57,25 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                 <p className="text-xs text-success">+{formatCurrency(profit)} lucro</p>
               </div>
 
-              <Badge className={cn("ml-2", status.className)}>
-                {status.label}
+              <Badge 
+                className={cn(
+                  "ml-2",
+                  order.isPaid 
+                    ? "bg-success/10 text-success border-success/30" 
+                    : "bg-warning/10 text-warning border-warning/30"
+                )}
+              >
+                {order.isPaid ? (
+                  <span className="flex items-center gap-1">
+                    <CheckCircle className="h-3 w-3" />
+                    Pago
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <DollarSign className="h-3 w-3" />
+                    Não Pago
+                  </span>
+                )}
               </Badge>
             </div>
           );

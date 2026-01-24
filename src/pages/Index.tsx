@@ -479,9 +479,9 @@ const Index = () => {
                 delay={200}
               />
               <StatsCard
-                title="Pedidos Pendentes"
-                value={pendingOrders}
-                icon={Users}
+                title="Pedidos Não Pagos"
+                value={orders.filter(o => !o.isPaid).length}
+                icon={DollarSign}
                 variant="warning"
                 delay={300}
               />
@@ -786,6 +786,7 @@ const Index = () => {
         order={selectedOrder}
         clients={clients}
         products={products}
+        shipments={shipments}
         onSave={handleSaveOrder}
       />
 

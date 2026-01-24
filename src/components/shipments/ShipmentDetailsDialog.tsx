@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, Minus, DollarSign, Package, Calculator, Info } from 'lucide-react';
+import { Plus, Minus, DollarSign, Package, Calculator, Info, FileText } from 'lucide-react';
+import { ShipmentPdfExport } from './ShipmentPdfExport';
 import {
   Dialog,
   DialogContent,
@@ -105,10 +106,17 @@ export function ShipmentDetailsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5" />
-            {shipment.name}
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              {shipment.name}
+            </DialogTitle>
+            <ShipmentPdfExport 
+              shipment={shipment} 
+              orders={shipmentOrders} 
+              costBreakdown={costBreakdown} 
+            />
+          </div>
         </DialogHeader>
 
         {/* Cost Breakdown Card */}
