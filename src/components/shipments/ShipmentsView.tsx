@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import { Package, Plus, Truck, CheckCircle, Clock, Archive, MoreHorizontal, Trash2, Eye } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Package, Plus, Truck, CheckCircle, Clock, Archive, MoreHorizontal, Trash2, Eye, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Shipment, useShipments } from '@/hooks/useShipments';
 import { Order } from '@/types';
 import { AddShipmentDialog } from './AddShipmentDialog';
@@ -14,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
+import { differenceInDays } from 'date-fns';
 
 interface ShipmentsViewProps {
   orders: Order[];
@@ -67,12 +69,44 @@ export function ShipmentsView({ orders, onOrderUpdate }: ShipmentsViewProps) {
     return orders.filter(o => (o as any).shipmentId === shipmentId);
   };
 
-  const formatCurrency = (value: number) => {
+const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
 
-  return (
+  // Check for old open shipments (more than 3 days)
+  const ALERT_THRESHOLD_DAYS = 3;
+  const oldOpenShipments = useMemo(() => {
+    return shipments.filter(s => {
+      if (s.status !== 'open') return false;
+      const daysOpen = differenceInDays(new Date(), s.createdAt);
+      return daysOpen >= ALERT_THRESHOLD_DAYS;
+    });
+  }, [shipments]);
+
+  const getDaysOpen = (shipment: Shipment) => {
+    return differenceInDays(new Date(), shipment.createdAt);
+  };
+
+  const isOldShipment = (shipment: Shipment) => {
+    return shipment.status === 'open' && getDaysOpen(shipment) >= ALERT_THRESHOLD_DAYS;
+  };
+
+return (
     <div className="space-y-6">
+      {/* Alert for old open shipments */}
+      {oldOpenShipments.length > 0 && (
+        <Alert variant="destructive" className="border-warning bg-warning/10">
+          <AlertTriangle className="h-4 w-4 text-warning" />
+          <AlertTitle className="text-warning">Remessas aguardando envio</AlertTitle>
+          <AlertDescription className="text-warning/80">
+            {oldOpenShipments.length === 1 
+              ? `A remessa "${oldOpenShipments[0].name}" está aberta há ${getDaysOpen(oldOpenShipments[0])} dias. Considere enviá-la para reduzir custos.`
+              : `${oldOpenShipments.length} remessas estão abertas há mais de ${ALERT_THRESHOLD_DAYS} dias: ${oldOpenShipments.map(s => `"${s.name}" (${getDaysOpen(s)} dias)`).join(', ')}`
+            }
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Remessas</h2>
@@ -137,7 +171,14 @@ export function ShipmentsView({ orders, onOrderUpdate }: ShipmentsViewProps) {
                   </DropdownMenu>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+<CardContent className="space-y-3">
+                {isOldShipment(shipment) && (
+                  <div className="flex items-center gap-2 text-warning text-sm bg-warning/10 rounded-md px-2 py-1">
+                    <AlertTriangle className="h-3 w-3" />
+                    <span>Aberta há {getDaysOpen(shipment)} dias</span>
+                  </div>
+                )}
+                
                 <Badge className={statusConfig[shipment.status].color}>
                   <StatusIcon className="h-3 w-3 mr-1" />
                   {statusConfig[shipment.status].label}
