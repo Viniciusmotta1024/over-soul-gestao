@@ -20,9 +20,10 @@ interface ShipmentDetailsDialogProps {
   shipment: Shipment;
   orders: Order[];
   onAddOrder: (orderId: string, shipmentId: string) => Promise<void>;
-  onRemoveOrder: (orderId: string) => Promise<void>;
+  onRemoveOrder: (orderId: string, shipmentId?: string) => Promise<void>;
   onOrderUpdate: (order: Order) => void;
   onShipmentUpdate: (shipment: Shipment) => void;
+  onRefreshOrders: () => void;
 }
 
 export function ShipmentDetailsDialog({
@@ -34,6 +35,7 @@ export function ShipmentDetailsDialog({
   onRemoveOrder,
   onOrderUpdate,
   onShipmentUpdate,
+  onRefreshOrders,
 }: ShipmentDetailsDialogProps) {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,14 +55,19 @@ export function ShipmentDetailsDialog({
   const handleAddSelected = async () => {
     setLoading(true);
     try {
+      const addedOrders = orders.filter(o => selectedOrders.includes(o.id));
+      const addedCost = addedOrders.reduce((sum, o) => sum + o.supplierCost * o.quantity, 0);
+      
       for (const orderId of selectedOrders) {
         await onAddOrder(orderId, shipment.id);
       }
       setSelectedOrders([]);
+      
       // Update total cost
-      const addedOrders = orders.filter(o => selectedOrders.includes(o.id));
-      const addedCost = addedOrders.reduce((sum, o) => sum + o.supplierCost * o.quantity, 0);
       onShipmentUpdate({ ...shipment, totalCost: shipment.totalCost + addedCost });
+      
+      // Refresh orders to reflect changes
+      onRefreshOrders();
     } finally {
       setLoading(false);
     }
@@ -68,13 +75,15 @@ export function ShipmentDetailsDialog({
 
   const handleRemoveOrder = async (orderId: string) => {
     const order = orders.find(o => o.id === orderId);
-    await onRemoveOrder(orderId);
+    await onRemoveOrder(orderId, shipment.id);
     if (order) {
       onShipmentUpdate({ 
         ...shipment, 
         totalCost: Math.max(0, shipment.totalCost - order.supplierCost * order.quantity) 
       });
     }
+    // Refresh orders to reflect changes
+    onRefreshOrders();
   };
 
   const toggleOrderSelection = (orderId: string) => {

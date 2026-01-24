@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Package, Plus, Truck, CheckCircle, Clock, Archive, MoreHorizontal, Trash2, Eye, AlertTriangle } from 'lucide-react';
+import { Package, Plus, Truck, CheckCircle, Clock, Archive, Trash2, Eye, AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,18 +8,13 @@ import { Shipment, useShipments } from '@/hooks/useShipments';
 import { Order } from '@/types';
 import { AddShipmentDialog } from './AddShipmentDialog';
 import { ShipmentDetailsDialog } from './ShipmentDetailsDialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 import { differenceInDays } from 'date-fns';
 
 interface ShipmentsViewProps {
   orders: Order[];
   onOrderUpdate: (order: Order) => void;
+  onRefreshOrders: () => void;
 }
 
 const statusConfig: Record<Shipment['status'], { label: string; icon: typeof Clock; color: string }> = {
@@ -29,7 +24,7 @@ const statusConfig: Record<Shipment['status'], { label: string; icon: typeof Clo
   closed: { label: 'Fechada', icon: Archive, color: 'bg-muted text-muted-foreground' },
 };
 
-export function ShipmentsView({ orders, onOrderUpdate }: ShipmentsViewProps) {
+export function ShipmentsView({ orders, onOrderUpdate, onRefreshOrders }: ShipmentsViewProps) {
   const { shipments, addShipment, updateShipment, deleteShipment, addOrderToShipment, removeOrderFromShipment, refetch } = useShipments();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
@@ -131,47 +126,17 @@ return (
                     <Package className="h-5 w-5 text-primary" />
                     <CardTitle className="text-lg">{shipment.name}</CardTitle>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleViewDetails(shipment)}>
-                        <Eye className="h-4 w-4 mr-2" />
-                        Ver Detalhes
-                      </DropdownMenuItem>
-                      {shipment.status === 'open' && (
-                        <DropdownMenuItem onClick={() => handleStatusChange(shipment, 'ordered')}>
-                          <Truck className="h-4 w-4 mr-2" />
-                          Marcar como Pedida
-                        </DropdownMenuItem>
-                      )}
-                      {shipment.status === 'ordered' && (
-                        <DropdownMenuItem onClick={() => handleStatusChange(shipment, 'received')}>
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Marcar como Recebida
-                        </DropdownMenuItem>
-                      )}
-                      {shipment.status === 'received' && (
-                        <DropdownMenuItem onClick={() => handleStatusChange(shipment, 'closed')}>
-                          <Archive className="h-4 w-4 mr-2" />
-                          Fechar Remessa
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem 
-                        onClick={() => handleDeleteClick(shipment)}
-                        className="text-destructive focus:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDeleteClick(shipment)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardHeader>
-<CardContent className="space-y-3">
+              <CardContent className="space-y-3">
                 {isOldShipment(shipment) && (
                   <div className="flex items-center gap-2 text-warning text-sm bg-warning/10 rounded-md px-2 py-1">
                     <AlertTriangle className="h-3 w-3" />
@@ -199,15 +164,52 @@ return (
                   <p className="text-sm text-muted-foreground line-clamp-2">{shipment.notes}</p>
                 )}
 
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full"
-                  onClick={() => handleViewDetails(shipment)}
-                >
-                  <Eye className="h-4 w-4 mr-2" />
-                  Ver Pedidos
-                </Button>
+                {/* Action buttons based on status */}
+                <div className="flex flex-col gap-2 pt-2">
+                  {shipment.status === 'open' && (
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleStatusChange(shipment, 'ordered')}
+                    >
+                      <Truck className="h-4 w-4 mr-2" />
+                      Marcar como Pedida
+                    </Button>
+                  )}
+                  {shipment.status === 'ordered' && (
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      className="w-full bg-success hover:bg-success/90"
+                      onClick={() => handleStatusChange(shipment, 'received')}
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Marcar como Recebida
+                    </Button>
+                  )}
+                  {shipment.status === 'received' && (
+                    <Button 
+                      variant="secondary" 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleStatusChange(shipment, 'closed')}
+                    >
+                      <Archive className="h-4 w-4 mr-2" />
+                      Fechar Remessa
+                    </Button>
+                  )}
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => handleViewDetails(shipment)}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    Ver Pedidos
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );
@@ -246,6 +248,7 @@ return (
           onRemoveOrder={removeOrderFromShipment}
           onOrderUpdate={onOrderUpdate}
           onShipmentUpdate={(s) => { updateShipment(s); refetch(); }}
+          onRefreshOrders={onRefreshOrders}
         />
       )}
 
