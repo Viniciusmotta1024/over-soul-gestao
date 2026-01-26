@@ -92,6 +92,45 @@ export type Database = {
         }
         Relationships: []
       }
+      dtf_shipments: {
+        Row: {
+          created_at: string
+          freight: number
+          id: string
+          meters: number
+          name: string
+          notes: string | null
+          price_per_meter: number
+          status: string
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          freight?: number
+          id?: string
+          meters?: number
+          name: string
+          notes?: string | null
+          price_per_meter?: number
+          status?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          freight?: number
+          id?: string
+          meters?: number
+          name?: string
+          notes?: string | null
+          price_per_meter?: number
+          status?: string
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           channel: string
@@ -380,7 +419,6 @@ export type Database = {
       shipments: {
         Row: {
           created_at: string
-          dtf_meters: number | null
           id: string
           name: string
           notes: string | null
@@ -390,7 +428,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          dtf_meters?: number | null
           id?: string
           name: string
           notes?: string | null
@@ -400,7 +437,6 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          dtf_meters?: number | null
           id?: string
           name?: string
           notes?: string | null

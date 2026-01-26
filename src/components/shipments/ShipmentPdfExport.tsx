@@ -10,14 +10,10 @@ interface ShipmentPdfExportProps {
   orders: Order[];
   costBreakdown: {
     totalShirts: number;
-    dtfMeters: number;
     shirtsCost: number;
     shirtsFreight: number;
-    dtfCost: number;
-    dtfFreight: number;
     totalCost: number;
     costPerShirt: number;
-    isManualDtf: boolean;
   };
 }
 
@@ -51,7 +47,7 @@ export function ShipmentPdfExport({ shipment, orders, costBreakdown }: ShipmentP
     // Header
     doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('Relatório de Remessa', pageWidth / 2, 20, { align: 'center' });
+    doc.text('Relatório de Remessa - Camisas', pageWidth / 2, 20, { align: 'center' });
     
     // Shipment info
     doc.setFontSize(14);
@@ -78,8 +74,6 @@ export function ShipmentPdfExport({ shipment, orders, costBreakdown }: ShipmentP
       body: [
         ['Camisas', `${costBreakdown.totalShirts} un`, formatCurrency(costBreakdown.shirtsCost)],
         ['Frete Camisas', '-', formatCurrency(costBreakdown.shirtsFreight)],
-        ['DTF', `${costBreakdown.dtfMeters} m${costBreakdown.isManualDtf ? '' : ' (auto)'}`, formatCurrency(costBreakdown.dtfCost)],
-        ['Frete DTF', '-', formatCurrency(costBreakdown.dtfFreight)],
       ],
       foot: [['CUSTO TOTAL', '', formatCurrency(costBreakdown.totalCost)]],
       theme: 'striped',
@@ -145,7 +139,7 @@ export function ShipmentPdfExport({ shipment, orders, costBreakdown }: ShipmentP
     doc.text(`Gerado em ${formatDate(new Date())}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
     
     // Save
-    doc.save(`remessa-${shipment.name.replace(/\s+/g, '-').toLowerCase()}.pdf`);
+    doc.save(`remessa-camisas-${shipment.name.replace(/\s+/g, '-').toLowerCase()}.pdf`);
   };
 
   return (

@@ -5,27 +5,18 @@ export interface ShipmentCostBreakdown {
   totalShirts: number;
   shirtsCost: number;
   shirtsFreight: number;
-  dtfMeters: number;
-  dtfCost: number;
-  dtfFreight: number;
   totalCost: number;
   costPerShirt: number;
-  isManualDtf: boolean;
 }
 
 /**
- * Hook para calcular o custo real de fabricação de uma remessa
- * Usa metros de DTF manuais quando especificados, ou calcula automaticamente
+ * Hook para calcular o custo de uma remessa de camisas
+ * DTF agora é gerenciado separadamente
  */
 export function useShipmentCostCalculator() {
-  const { freights, getDTFPrice } = usePricingConfig();
+  const { freights } = usePricingConfig();
 
-  /**
-   * Calculate shipment cost
-   * @param orders - Orders in the shipment
-   * @param manualDtfMeters - Manual DTF meters (whole numbers only, null for auto-calculation)
-   */
-  const calculateShipmentCost = (orders: Order[], manualDtfMeters: number | null = null): ShipmentCostBreakdown => {
+  const calculateShipmentCost = (orders: Order[]): ShipmentCostBreakdown => {
     // Total de camisas na remessa
     const totalShirts = orders.reduce((sum, order) => sum + order.quantity, 0);
     
@@ -35,37 +26,19 @@ export function useShipmentCostCalculator() {
         totalShirts: 0,
         shirtsCost: 0,
         shirtsFreight: 0,
-        dtfMeters: manualDtfMeters || 0,
-        dtfCost: 0,
-        dtfFreight: 0,
         totalCost: 0,
         costPerShirt: 0,
-        isManualDtf: manualDtfMeters !== null,
       };
     }
     
-    // Metros de DTF: usa o valor manual se definido, senão calcula automaticamente
-    const dtfMeters = manualDtfMeters !== null 
-      ? manualDtfMeters 
-      : Math.ceil(totalShirts / 3.5); // Arredonda para cima (inteiro)
-    
-    // Buscar preços de frete
+    // Buscar preço de frete de camisas
     const shirtFreight = freights.find(f => f.name.toLowerCase().includes('camisa'))?.price || 19.90;
-    const dtfFreight = freights.find(f => f.name.toLowerCase().includes('dtf'))?.price || 12.59;
     
     // Custo das camisas (usando custo de fornecedor dos pedidos)
     const shirtsCost = orders.reduce((sum, order) => sum + order.supplierCost * order.quantity, 0);
     
-    // Custo do DTF baseado na metragem
-    const dtfPricePerMeter = getDTFPrice(dtfMeters);
-    const dtfCost = dtfMeters * dtfPricePerMeter;
-    
-    // Custos de frete
-    const shirtsFreight = shirtFreight;
-    const dtfFreightCost = dtfFreight;
-    
-    // Custo total
-    const totalCost = shirtsCost + shirtsFreight + dtfCost + dtfFreightCost;
+    // Custo total (apenas camisas + frete, DTF é separado)
+    const totalCost = shirtsCost + shirtFreight;
     
     // Custo por camisa
     const costPerShirt = totalCost / totalShirts;
@@ -73,13 +46,9 @@ export function useShipmentCostCalculator() {
     return {
       totalShirts,
       shirtsCost,
-      shirtsFreight,
-      dtfMeters,
-      dtfCost,
-      dtfFreight: dtfFreightCost,
+      shirtsFreight: shirtFreight,
       totalCost,
       costPerShirt,
-      isManualDtf: manualDtfMeters !== null,
     };
   };
 

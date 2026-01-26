@@ -1,14 +1,16 @@
 import { useState, useMemo } from 'react';
-import { Package, Plus, Truck, CheckCircle, Clock, Archive, Trash2, Eye, AlertTriangle, TrendingUp } from 'lucide-react';
+import { Package, Plus, Truck, CheckCircle, Clock, Archive, Trash2, Eye, AlertTriangle, TrendingUp, Shirt, Layers } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Shipment, useShipments } from '@/hooks/useShipments';
 import { Order } from '@/types';
 import { AddShipmentDialog } from './AddShipmentDialog';
 import { ShipmentDetailsDialog } from './ShipmentDetailsDialog';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
+import { DtfShipmentsView } from './DtfShipmentsView';
 import { useShipmentCostCalculator } from '@/hooks/useShipmentCostCalculator';
 import { differenceInDays } from 'date-fns';
 
@@ -111,15 +113,31 @@ return (
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Remessas</h2>
-          <p className="text-muted-foreground">Agrupe pedidos em remessas para reduzir custos</p>
+          <p className="text-muted-foreground">Gerencie remessas de camisas e DTF separadamente</p>
         </div>
-        <Button onClick={() => setAddDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova Remessa
-        </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <Tabs defaultValue="shirts" className="w-full">
+        <TabsList className="mb-4">
+          <TabsTrigger value="shirts" className="flex items-center gap-2">
+            <Shirt className="h-4 w-4" />
+            Camisas
+          </TabsTrigger>
+          <TabsTrigger value="dtf" className="flex items-center gap-2">
+            <Layers className="h-4 w-4" />
+            DTF
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="shirts" className="space-y-4">
+          <div className="flex items-center justify-end">
+            <Button onClick={() => setAddDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Remessa de Camisas
+            </Button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {shipments.map((shipment) => {
           const StatusIcon = statusConfig[shipment.status].icon;
           const shipmentOrders = getOrdersForShipment(shipment.id);
@@ -170,10 +188,6 @@ return (
                 {/* Financial summary */}
                 {shipmentOrders.length > 0 && (
                   <div className="p-2 rounded-md bg-muted/50 space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">DTF:</span>
-                      <span>{financials.cost.dtfMeters.toFixed(1)}m</span>
-                    </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Receita:</span>
                       <span>{formatCurrency(financials.revenue)}</span>
@@ -260,7 +274,13 @@ return (
             </CardContent>
           </Card>
         )}
-      </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="dtf">
+          <DtfShipmentsView />
+        </TabsContent>
+      </Tabs>
 
       <AddShipmentDialog
         open={addDialogOpen}
