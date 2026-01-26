@@ -13,6 +13,7 @@ export interface Order {
   isPaid: boolean;
   paidAt?: Date;
   shipmentId?: string;
+  isInternalTest?: boolean;
 }
 
 export interface Client {

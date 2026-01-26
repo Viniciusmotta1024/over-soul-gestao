@@ -176,6 +176,7 @@ const Index = () => {
   }, [products, productFilters]);
 
   // Calculate stats from actual data with month-over-month comparison
+  // Only count PAID orders for revenue/profit, exclude internal test orders from financial metrics
   const statsData = useMemo(() => {
     const now = new Date();
     const currentMonthStart = startOfMonth(now);
@@ -183,23 +184,36 @@ const Index = () => {
     const lastMonthStart = startOfMonth(subMonths(now, 1));
     const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
-    // Filter orders by month
-    const currentMonthOrders = orders.filter(o => 
+    // Filter out internal test orders for financial calculations
+    const salesOrders = orders.filter(o => !o.isInternalTest);
+    // Only count paid orders for revenue/profit
+    const paidOrders = salesOrders.filter(o => o.isPaid);
+
+    // Filter orders by month (for trends, use all non-internal orders)
+    const currentMonthOrders = salesOrders.filter(o => 
       o.createdAt >= currentMonthStart && o.createdAt <= currentMonthEnd
     );
-    const lastMonthOrders = orders.filter(o => 
+    const lastMonthOrders = salesOrders.filter(o => 
       o.createdAt >= lastMonthStart && o.createdAt <= lastMonthEnd
     );
 
-    // Current month stats
+    // Paid orders by month (for revenue/profit trends)
+    const currentMonthPaidOrders = paidOrders.filter(o => 
+      o.paidAt && o.paidAt >= currentMonthStart && o.paidAt <= currentMonthEnd
+    );
+    const lastMonthPaidOrders = paidOrders.filter(o => 
+      o.paidAt && o.paidAt >= lastMonthStart && o.paidAt <= lastMonthEnd
+    );
+
+    // Current month stats (revenue/profit from PAID orders only)
     const currentOrdersCount = currentMonthOrders.length;
-    const currentRevenue = currentMonthOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
-    const currentProfit = currentMonthOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
+    const currentRevenue = currentMonthPaidOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
+    const currentProfit = currentMonthPaidOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
 
     // Last month stats
     const lastOrdersCount = lastMonthOrders.length;
-    const lastRevenue = lastMonthOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
-    const lastProfit = lastMonthOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
+    const lastRevenue = lastMonthPaidOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
+    const lastProfit = lastMonthPaidOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
 
     // Calculate percentage changes
     const calcTrend = (current: number, previous: number) => {
@@ -209,10 +223,11 @@ const Index = () => {
     };
 
     return {
-      totalOrders: orders.length,
-      totalRevenue: orders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0),
-      totalProfit: orders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0),
-      pendingOrders: orders.filter(o => o.status === 'pending' || o.status === 'processing').length,
+      totalOrders: salesOrders.length,
+      totalRevenue: paidOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0),
+      totalProfit: paidOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0),
+      unpaidOrders: salesOrders.filter(o => !o.isPaid).length,
+      internalTestOrders: orders.filter(o => o.isInternalTest).length,
       trends: {
         orders: calcTrend(currentOrdersCount, lastOrdersCount),
         revenue: calcTrend(currentRevenue, lastRevenue),
@@ -221,14 +236,15 @@ const Index = () => {
     };
   }, [orders]);
 
-  const { totalOrders, totalRevenue, totalProfit, pendingOrders } = statsData;
-
-  // Calculate channel stats from actual orders
+  // Calculate channel stats from actual orders (only PAID non-internal orders)
   const getChannelStats = () => {
+    const salesOrders = orders.filter(o => !o.isInternalTest);
+    const paidOrders = salesOrders.filter(o => o.isPaid);
+    
     return salesChannels.map(channel => ({
       ...channel,
-      totalOrders: orders.filter(o => o.channel === channel.id).length,
-      totalRevenue: orders.filter(o => o.channel === channel.id).reduce((acc, o) => acc + o.salePrice * o.quantity, 0),
+      totalOrders: salesOrders.filter(o => o.channel === channel.id).length,
+      totalRevenue: paidOrders.filter(o => o.channel === channel.id).reduce((acc, o) => acc + o.salePrice * o.quantity, 0),
     }));
   };
 
@@ -457,14 +473,14 @@ const Index = () => {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <StatsCard
                 title="Total de Pedidos"
-                value={totalOrders}
+                value={statsData.totalOrders}
                 icon={Package}
                 trend={statsData.trends.orders ?? undefined}
                 delay={0}
               />
               <StatsCard
                 title="Faturamento"
-                value={formatCurrency(totalRevenue)}
+                value={formatCurrency(statsData.totalRevenue)}
                 icon={DollarSign}
                 variant="primary"
                 trend={statsData.trends.revenue ?? undefined}
@@ -472,7 +488,7 @@ const Index = () => {
               />
               <StatsCard
                 title="Lucro Total"
-                value={formatCurrency(totalProfit)}
+                value={formatCurrency(statsData.totalProfit)}
                 icon={TrendingUp}
                 variant="success"
                 trend={statsData.trends.profit ?? undefined}
@@ -480,7 +496,7 @@ const Index = () => {
               />
               <StatsCard
                 title="Pedidos Não Pagos"
-                value={orders.filter(o => !o.isPaid).length}
+                value={statsData.unpaidOrders}
                 icon={DollarSign}
                 variant="warning"
                 delay={300}

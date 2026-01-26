@@ -99,6 +99,7 @@ export type Database = {
           created_at: string
           customer_name: string
           id: string
+          is_internal_test: boolean
           is_paid: boolean
           paid_at: string | null
           product: string
@@ -116,6 +117,7 @@ export type Database = {
           created_at?: string
           customer_name: string
           id?: string
+          is_internal_test?: boolean
           is_paid?: boolean
           paid_at?: string | null
           product: string
@@ -133,6 +135,7 @@ export type Database = {
           created_at?: string
           customer_name?: string
           id?: string
+          is_internal_test?: boolean
           is_paid?: boolean
           paid_at?: string | null
           product?: string

@@ -33,6 +33,7 @@ const mappedOrders: Order[] = (data || []).map(o => ({
         isPaid: o.is_paid,
         paidAt: o.paid_at ? new Date(o.paid_at) : undefined,
         shipmentId: o.shipment_id || undefined,
+        isInternalTest: o.is_internal_test || false,
       }));
 
       setOrders(mappedOrders);
@@ -59,6 +60,7 @@ const mappedOrders: Order[] = (data || []).map(o => ({
           supplier_cost: orderData.supplierCost,
           sale_price: orderData.salePrice,
           shipment_id: orderData.shipmentId || null,
+          is_internal_test: orderData.isInternalTest || false,
         })
         .select()
         .single();
@@ -99,6 +101,7 @@ const newOrder: Order = {
         isPaid: data.is_paid,
         paidAt: data.paid_at ? new Date(data.paid_at) : undefined,
         shipmentId: data.shipment_id || undefined,
+        isInternalTest: data.is_internal_test || false,
       };
 
       setOrders(prev => [newOrder, ...prev]);
@@ -139,6 +142,7 @@ const { error } = await supabase
           is_paid: order.isPaid,
           paid_at: order.paidAt?.toISOString() || null,
           shipment_id: order.shipmentId || null,
+          is_internal_test: order.isInternalTest || false,
         })
         .eq('id', order.id);
 

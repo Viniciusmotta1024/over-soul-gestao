@@ -22,13 +22,18 @@ const CHANNEL_COLORS = {
 };
 
 export function ReportsView({ orders }: ReportsViewProps) {
-  // Calculate statistics
-  const totalRevenue = orders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
-  const totalCost = orders.reduce((acc, o) => acc + (o.supplierCost * o.quantity), 0);
+  // Filter out internal test orders for financial calculations
+  const salesOrders = orders.filter(o => !o.isInternalTest);
+  // Only paid orders count for revenue/profit
+  const paidOrders = salesOrders.filter(o => o.isPaid);
+
+  // Calculate statistics from PAID orders only
+  const totalRevenue = paidOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
+  const totalCost = paidOrders.reduce((acc, o) => acc + (o.supplierCost * o.quantity), 0);
   const totalProfit = totalRevenue - totalCost;
   const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
-  // Calculate month-over-month trends
+  // Calculate month-over-month trends (based on paidAt date for financial metrics)
   const trends = useMemo(() => {
     const now = new Date();
     const currentMonthStart = startOfMonth(now);
@@ -36,19 +41,19 @@ export function ReportsView({ orders }: ReportsViewProps) {
     const lastMonthStart = startOfMonth(subMonths(now, 1));
     const lastMonthEnd = endOfMonth(subMonths(now, 1));
 
-    // Current month orders
-    const currentMonthOrders = orders.filter(o => 
-      isWithinInterval(o.createdAt, { start: currentMonthStart, end: currentMonthEnd })
+    // Current month PAID orders (by paidAt date)
+    const currentMonthPaidOrders = paidOrders.filter(o => 
+      o.paidAt && isWithinInterval(o.paidAt, { start: currentMonthStart, end: currentMonthEnd })
     );
-    const currentRevenue = currentMonthOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
-    const currentProfit = currentMonthOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
+    const currentRevenue = currentMonthPaidOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
+    const currentProfit = currentMonthPaidOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
 
-    // Last month orders
-    const lastMonthOrders = orders.filter(o => 
-      isWithinInterval(o.createdAt, { start: lastMonthStart, end: lastMonthEnd })
+    // Last month PAID orders
+    const lastMonthPaidOrders = paidOrders.filter(o => 
+      o.paidAt && isWithinInterval(o.paidAt, { start: lastMonthStart, end: lastMonthEnd })
     );
-    const lastRevenue = lastMonthOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
-    const lastProfit = lastMonthOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
+    const lastRevenue = lastMonthPaidOrders.reduce((acc, o) => acc + (o.salePrice * o.quantity), 0);
+    const lastProfit = lastMonthPaidOrders.reduce((acc, o) => acc + ((o.salePrice - o.supplierCost) * o.quantity), 0);
 
     // Calculate percentage changes
     const calcTrend = (current: number, previous: number) => {
@@ -61,23 +66,24 @@ export function ReportsView({ orders }: ReportsViewProps) {
       revenue: calcTrend(currentRevenue, lastRevenue),
       profit: calcTrend(currentProfit, lastProfit),
     };
-  }, [orders]);
+  }, [paidOrders]);
 
-  // Orders by channel
+  // Orders by channel (using sales orders for count, paid orders for revenue)
   const channelData = [
-    { name: 'Shopee', value: orders.filter(o => o.channel === 'shopee').length, revenue: orders.filter(o => o.channel === 'shopee').reduce((acc, o) => acc + o.salePrice * o.quantity, 0) },
-    { name: 'Ministério', value: orders.filter(o => o.channel === 'ministerio').length, revenue: orders.filter(o => o.channel === 'ministerio').reduce((acc, o) => acc + o.salePrice * o.quantity, 0) },
-    { name: 'Site', value: orders.filter(o => o.channel === 'site').length, revenue: orders.filter(o => o.channel === 'site').reduce((acc, o) => acc + o.salePrice * o.quantity, 0) },
+    { name: 'Shopee', value: salesOrders.filter(o => o.channel === 'shopee').length, revenue: paidOrders.filter(o => o.channel === 'shopee').reduce((acc, o) => acc + o.salePrice * o.quantity, 0) },
+    { name: 'Ministério', value: salesOrders.filter(o => o.channel === 'ministerio').length, revenue: paidOrders.filter(o => o.channel === 'ministerio').reduce((acc, o) => acc + o.salePrice * o.quantity, 0) },
+    { name: 'Site', value: salesOrders.filter(o => o.channel === 'site').length, revenue: paidOrders.filter(o => o.channel === 'site').reduce((acc, o) => acc + o.salePrice * o.quantity, 0) },
   ];
 
-  // Orders by status
-  const statusData = [
-    { name: 'Pendentes', value: orders.filter(o => o.status === 'pending').length },
-    { name: 'Processando', value: orders.filter(o => o.status === 'processing').length },
-    { name: 'Concluídos', value: orders.filter(o => o.status === 'completed').length },
+  // Orders by payment status (instead of order status)
+  const paymentStatusData = [
+    { name: 'Pagos', value: salesOrders.filter(o => o.isPaid).length },
+    { name: 'Não Pagos', value: salesOrders.filter(o => !o.isPaid).length },
   ];
 
-  // Monthly evolution data (last 6 months)
+  const internalTestCount = orders.filter(o => o.isInternalTest).length;
+
+  // Monthly evolution data (last 6 months) - use paidAt for revenue/profit
   const monthlyData = useMemo(() => {
     const months = [];
     const now = new Date();
@@ -87,19 +93,25 @@ export function ReportsView({ orders }: ReportsViewProps) {
       const monthStart = startOfMonth(monthDate);
       const monthEnd = endOfMonth(monthDate);
       
-      const monthOrders = orders.filter(o => 
+      // All non-internal orders created in this month (for order count)
+      const monthOrders = salesOrders.filter(o => 
         isWithinInterval(o.createdAt, { start: monthStart, end: monthEnd })
       );
       
-      const shopeeOrders = monthOrders.filter(o => o.channel === 'shopee');
-      const ministerioOrders = monthOrders.filter(o => o.channel === 'ministerio');
-      const siteOrders = monthOrders.filter(o => o.channel === 'site');
+      // Paid orders with paidAt in this month (for revenue/profit)
+      const monthPaidOrders = paidOrders.filter(o => 
+        o.paidAt && isWithinInterval(o.paidAt, { start: monthStart, end: monthEnd })
+      );
+      
+      const shopeeOrders = monthPaidOrders.filter(o => o.channel === 'shopee');
+      const ministerioOrders = monthPaidOrders.filter(o => o.channel === 'ministerio');
+      const siteOrders = monthPaidOrders.filter(o => o.channel === 'site');
       
       months.push({
         month: format(monthDate, 'MMM', { locale: ptBR }),
         fullMonth: format(monthDate, 'MMMM yyyy', { locale: ptBR }),
-        total: monthOrders.reduce((acc, o) => acc + o.salePrice * o.quantity, 0),
-        lucro: monthOrders.reduce((acc, o) => acc + (o.salePrice - o.supplierCost) * o.quantity, 0),
+        total: monthPaidOrders.reduce((acc, o) => acc + o.salePrice * o.quantity, 0),
+        lucro: monthPaidOrders.reduce((acc, o) => acc + (o.salePrice - o.supplierCost) * o.quantity, 0),
         pedidos: monthOrders.length,
         shopee: shopeeOrders.reduce((acc, o) => acc + o.salePrice * o.quantity, 0),
         ministerio: ministerioOrders.reduce((acc, o) => acc + o.salePrice * o.quantity, 0),
@@ -108,7 +120,7 @@ export function ReportsView({ orders }: ReportsViewProps) {
     }
     
     return months;
-  }, [orders]);
+  }, [salesOrders, paidOrders]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -293,14 +305,14 @@ export function ReportsView({ orders }: ReportsViewProps) {
           </div>
         </div>
 
-        {/* Orders by Status */}
+        {/* Orders by Payment Status */}
         <div className="glass rounded-xl p-6 animate-fade-in" style={{ animationDelay: '700ms' }}>
-          <h3 className="text-lg font-serif font-semibold text-foreground mb-6">Pedidos por Status</h3>
+          <h3 className="text-lg font-serif font-semibold text-foreground mb-6">Pedidos por Status de Pagamento</h3>
           <div className="h-[300px] flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={statusData}
+                  data={paymentStatusData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -310,8 +322,8 @@ export function ReportsView({ orders }: ReportsViewProps) {
                   label={({ name, value }) => `${name}: ${value}`}
                   labelLine={false}
                 >
-                  {statusData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {paymentStatusData.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={index === 0 ? 'hsl(142, 71%, 45%)' : 'hsl(38, 92%, 50%)'} />
                   ))}
                 </Pie>
                 <Tooltip 
@@ -324,6 +336,11 @@ export function ReportsView({ orders }: ReportsViewProps) {
               </PieChart>
             </ResponsiveContainer>
           </div>
+          {internalTestCount > 0 && (
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              {internalTestCount} pedido(s) de teste interno não contabilizado(s)
+            </p>
+          )}
         </div>
       </div>
 
