@@ -380,6 +380,7 @@ export type Database = {
       shipments: {
         Row: {
           created_at: string
+          dtf_meters: number | null
           id: string
           name: string
           notes: string | null
@@ -389,6 +390,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          dtf_meters?: number | null
           id?: string
           name: string
           notes?: string | null
@@ -398,6 +400,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          dtf_meters?: number | null
           id?: string
           name?: string
           notes?: string | null
