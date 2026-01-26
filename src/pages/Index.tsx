@@ -66,7 +66,7 @@ const Index = () => {
   const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, updateProductsOrder } = useProducts();
   const { shipments, refetch: refetchShipments } = useShipments();
   const { newOrdersCount, clearNotifications } = useOrderNotifications();
-  const { alerts: unpaidShipmentAlerts } = useUnpaidShipmentAlerts(orders, shipments);
+  const { alerts: unpaidShipmentAlerts, hasUnpaidOrders, getUnpaidCount } = useUnpaidShipmentAlerts(orders, shipments);
   const { isAdmin, teamMembers, createUser, updateUserRole, removeUser } = useUserRoles();
   const { toast } = useToast();
   
@@ -578,6 +578,8 @@ const Index = () => {
             orders={orders} 
             onOrderUpdate={updateOrder}
             onRefreshOrders={refetchOrders}
+            hasUnpaidOrders={hasUnpaidOrders}
+            getUnpaidCount={getUnpaidCount}
           />
         );
 

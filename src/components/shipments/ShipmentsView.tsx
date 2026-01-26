@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Package, Plus, Truck, CheckCircle, Clock, Archive, Trash2, Eye, AlertTriangle, TrendingUp, Shirt, Layers } from 'lucide-react';
+import { Package, Plus, Truck, CheckCircle, Clock, Archive, Trash2, Eye, AlertTriangle, TrendingUp, Shirt, Layers, DollarSign } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,8 @@ interface ShipmentsViewProps {
   orders: Order[];
   onOrderUpdate: (order: Order) => void;
   onRefreshOrders: () => void;
+  hasUnpaidOrders?: (shipmentId: string) => boolean;
+  getUnpaidCount?: (shipmentId: string) => number;
 }
 
 const statusConfig: Record<Shipment['status'], { label: string; icon: typeof Clock; color: string }> = {
@@ -27,7 +29,7 @@ const statusConfig: Record<Shipment['status'], { label: string; icon: typeof Clo
   closed: { label: 'Fechada', icon: Archive, color: 'bg-muted text-muted-foreground' },
 };
 
-export function ShipmentsView({ orders, onOrderUpdate, onRefreshOrders }: ShipmentsViewProps) {
+export function ShipmentsView({ orders, onOrderUpdate, onRefreshOrders, hasUnpaidOrders, getUnpaidCount }: ShipmentsViewProps) {
   const { shipments, addShipment, updateShipment, deleteShipment, addOrderToShipment, removeOrderFromShipment, refetch } = useShipments();
   const { calculateShipmentCost, formatCurrency } = useShipmentCostCalculator();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -142,13 +144,23 @@ return (
           const StatusIcon = statusConfig[shipment.status].icon;
           const shipmentOrders = getOrdersForShipment(shipment.id);
           const financials = getShipmentFinancials(shipmentOrders);
+          const shipmentHasUnpaid = hasUnpaidOrders?.(shipment.id) || false;
+          const unpaidCount = getUnpaidCount?.(shipment.id) || 0;
           
           return (
-            <Card key={shipment.id} className="relative">
+            <Card key={shipment.id} className={`relative ${shipmentHasUnpaid ? 'border-destructive border-2' : ''}`}>
+              {/* Unpaid orders indicator badge */}
+              {shipmentHasUnpaid && (
+                <div className="absolute -top-2 -right-2 flex items-center gap-1 px-2 py-1 bg-destructive text-destructive-foreground rounded-full text-xs font-medium shadow-lg">
+                  <DollarSign className="h-3 w-3" />
+                  {unpaidCount} não pago{unpaidCount > 1 ? 's' : ''}
+                </div>
+              )}
+              
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2">
-                    <Package className="h-5 w-5 text-primary" />
+                    <Package className={`h-5 w-5 ${shipmentHasUnpaid ? 'text-destructive' : 'text-primary'}`} />
                     <CardTitle className="text-lg">{shipment.name}</CardTitle>
                   </div>
                   <Button 
@@ -162,6 +174,14 @@ return (
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Unpaid warning for ordered shipments */}
+                {shipmentHasUnpaid && shipment.status === 'ordered' && (
+                  <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 rounded-md px-2 py-1">
+                    <DollarSign className="h-3 w-3" />
+                    <span>{unpaidCount} pedido{unpaidCount > 1 ? 's' : ''} aguardando pagamento</span>
+                  </div>
+                )}
+                
                 {isOldShipment(shipment) && (
                   <div className="flex items-center gap-2 text-warning text-sm bg-warning/10 rounded-md px-2 py-1">
                     <AlertTriangle className="h-3 w-3" />
