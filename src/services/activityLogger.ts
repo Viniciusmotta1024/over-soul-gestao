@@ -1,7 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import { Json } from '@/integrations/supabase/types';
 
-type EntityType = 'order' | 'client' | 'supplier' | 'product' | 'team' | 'auth' | 'shipment';
+type EntityType = 'order' | 'client' | 'supplier' | 'product' | 'team' | 'auth' | 'shipment' | 'dtf_shipment';
 type ActionType = 'create' | 'update' | 'delete' | 'login' | 'logout' | 'status_change';
 
 class ActivityLoggerService {
