@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Order, Client, Supplier } from '@/types';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +18,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface OrdersTableProps {
   orders: Order[];
@@ -33,6 +44,8 @@ const channelConfig = {
 };
 
 export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onPaymentToggle }: OrdersTableProps) {
+  const [orderToUnpay, setOrderToUnpay] = useState<Order | null>(null);
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -43,6 +56,23 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onPayment
   const filteredOrders = filterChannel 
     ? orders.filter(o => o.channel === filterChannel)
     : orders;
+
+  const handlePaymentClick = (order: Order) => {
+    if (order.isPaid) {
+      // If currently paid, show confirmation before unmarking
+      setOrderToUnpay(order);
+    } else {
+      // If not paid, mark as paid directly
+      onPaymentToggle?.(order);
+    }
+  };
+
+  const confirmUnpay = () => {
+    if (orderToUnpay) {
+      onPaymentToggle?.(orderToUnpay);
+      setOrderToUnpay(null);
+    }
+  };
 
   return (
     <div className="glass rounded-xl overflow-hidden animate-fade-in">
@@ -113,7 +143,7 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onPayment
                               ? "text-success hover:text-success hover:bg-success/10" 
                               : "text-muted-foreground hover:text-warning hover:bg-warning/10"
                           )}
-                          onClick={() => onPaymentToggle?.(order)}
+                          onClick={() => handlePaymentClick(order)}
                         >
                           <DollarSign className="h-4 w-4" />
                         </Button>
@@ -162,6 +192,26 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onPayment
           })}
         </TableBody>
       </Table>
+
+      <AlertDialog open={!!orderToUnpay} onOpenChange={(open) => !open && setOrderToUnpay(null)}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif">Desmarcar pagamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja desmarcar o pedido de <strong>{orderToUnpay?.customerName}</strong> ({orderToUnpay?.product} - {orderToUnpay?.size}) como não pago?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmUnpay}
+              className="bg-warning hover:bg-warning/90 text-warning-foreground"
+            >
+              Desmarcar pagamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
