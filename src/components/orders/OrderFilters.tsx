@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Client } from '@/types';
+import { Shipment } from '@/hooks/useShipments';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,7 +17,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { CalendarIcon, X, Filter, DollarSign } from 'lucide-react';
+import { CalendarIcon, X, Filter, DollarSign, Package } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -28,16 +29,18 @@ export interface OrderFiltersState {
   channel?: string;
   clientId?: string;
   paymentStatus?: 'paid' | 'unpaid';
+  shipmentId?: string;
 }
 
 interface OrderFiltersProps {
   clients: Client[];
+  shipments: Shipment[];
   filters: OrderFiltersState;
   onFiltersChange: (filters: OrderFiltersState) => void;
   onClear: () => void;
 }
 
-export function OrderFilters({ clients, filters, onFiltersChange, onClear }: OrderFiltersProps) {
+export function OrderFilters({ clients, shipments, filters, onFiltersChange, onClear }: OrderFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   const hasActiveFilters = Object.values(filters).some(v => v !== undefined && v !== '');
@@ -187,6 +190,24 @@ export function OrderFilters({ clients, filters, onFiltersChange, onClear }: Ord
               </Select>
             </div>
 
+            {/* Shipment Filter */}
+            <div className="space-y-2">
+              <Label>Remessa</Label>
+              <Select value={filters.shipmentId || 'all'} onValueChange={(v) => updateFilter('shipmentId', v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  {shipments.map((shipment) => (
+                    <SelectItem key={shipment.id} value={shipment.id}>
+                      📦 {shipment.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {hasActiveFilters && (
               <Button variant="ghost" className="w-full gap-2" onClick={onClear}>
                 <X className="h-4 w-4" />
@@ -239,6 +260,16 @@ export function OrderFilters({ clients, filters, onFiltersChange, onClear }: Ord
           <DollarSign className="h-3 w-3" />
           <span>{filters.paymentStatus === 'paid' ? 'Pago' : 'Não Pago'}</span>
           <Button variant="ghost" size="icon" className="h-4 w-4" onClick={() => updateFilter('paymentStatus', undefined)}>
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
+
+      {filters.shipmentId && (
+        <div className="flex items-center gap-1 px-2 py-1 bg-destructive/10 text-destructive rounded-md text-sm">
+          <Package className="h-3 w-3" />
+          <span>Remessa: {shipments.find(s => s.id === filters.shipmentId)?.name || 'Desconhecida'}</span>
+          <Button variant="ghost" size="icon" className="h-4 w-4 hover:bg-destructive/20" onClick={() => updateFilter('shipmentId', undefined)}>
             <X className="h-3 w-3" />
           </Button>
         </div>

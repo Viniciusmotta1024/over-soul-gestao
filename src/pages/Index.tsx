@@ -117,6 +117,7 @@ const Index = () => {
       if (orderFilters.dateTo && isAfter(order.createdAt, endOfDay(orderFilters.dateTo))) return false;
       if (orderFilters.paymentStatus === 'paid' && !order.isPaid) return false;
       if (orderFilters.paymentStatus === 'unpaid' && order.isPaid) return false;
+      if (orderFilters.shipmentId && order.shipmentId !== orderFilters.shipmentId) return false;
       return true;
     });
   }, [orders, orderFilters]);
@@ -429,7 +430,12 @@ const Index = () => {
   };
 
   const handleUnpaidAlertClick = (shipmentId: string) => {
-    setActiveTab('shipments');
+    // Filter orders to show only unpaid orders from this shipment
+    setOrderFilters({ 
+      paymentStatus: 'unpaid',
+      shipmentId: shipmentId 
+    });
+    setActiveTab('orders');
   };
 
   const handleActivityLogsClick = () => {
@@ -538,6 +544,7 @@ const Index = () => {
             <div className="flex items-center justify-between flex-wrap gap-4">
               <OrderFilters
                 clients={clients}
+                shipments={shipments}
                 filters={orderFilters}
                 onFiltersChange={setOrderFilters}
                 onClear={() => setOrderFilters({})}
