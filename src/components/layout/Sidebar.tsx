@@ -27,6 +27,7 @@ interface SidebarProps {
   onActivityLogsClick: () => void;
   onPasswordRecoveryClick: () => void;
   onTeamClick: () => void;
+  onLogout?: () => void;
   isAdmin?: boolean;
 }
 
@@ -50,6 +51,7 @@ function SidebarContent({
   onActivityLogsClick, 
   onPasswordRecoveryClick, 
   onTeamClick, 
+  onLogout,
   isAdmin = false,
   onItemClick
 }: SidebarProps & { onItemClick?: () => void }) {
@@ -119,6 +121,7 @@ function SidebarContent({
             onTeamClick();
             onItemClick?.();
           }}
+          onLogout={onLogout}
           isAdmin={isAdmin}
         />
       </div>
