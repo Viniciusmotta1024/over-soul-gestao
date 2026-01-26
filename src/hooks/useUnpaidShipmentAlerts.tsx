@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { Order } from '@/types';
 import { Shipment } from '@/hooks/useShipments';
 
@@ -12,6 +13,8 @@ export interface UnpaidShipmentAlert {
 
 export function useUnpaidShipmentAlerts(orders: Order[], shipments: Shipment[]) {
   const [alerts, setAlerts] = useState<UnpaidShipmentAlert[]>([]);
+  const { toast } = useToast();
+  const previousAlertsRef = useRef<Map<string, UnpaidShipmentAlert>>(new Map());
 
   // Calculate alerts: shipments marked as "ordered" with unpaid orders
   const calculateAlerts = useCallback(() => {
@@ -32,9 +35,25 @@ export function useUnpaidShipmentAlerts(orders: Order[], shipments: Shipment[]) 
         });
       }
     }
+
+    // Check for resolved alerts (was in previous alerts but not in new ones)
+    const newAlertsMap = new Map(newAlerts.map(a => [a.shipmentId, a]));
+    
+    previousAlertsRef.current.forEach((prevAlert, shipmentId) => {
+      if (!newAlertsMap.has(shipmentId)) {
+        // This alert was resolved - show toast
+        toast({
+          title: '✅ Pagamentos recebidos!',
+          description: `Todos os pedidos da remessa "${prevAlert.shipmentName}" foram pagos.`,
+        });
+      }
+    });
+
+    // Update the previous alerts reference
+    previousAlertsRef.current = newAlertsMap;
     
     setAlerts(newAlerts);
-  }, [orders, shipments]);
+  }, [orders, shipments, toast]);
 
   // Recalculate alerts when orders or shipments change
   useEffect(() => {
@@ -87,6 +106,17 @@ export function useUnpaidShipmentAlerts(orders: Order[], shipments: Shipment[]) 
     };
   }, [calculateAlerts]);
 
+  // Helper function to check if a shipment has unpaid orders
+  const hasUnpaidOrders = useCallback((shipmentId: string) => {
+    return alerts.some(a => a.shipmentId === shipmentId);
+  }, [alerts]);
+
+  // Get unpaid count for a specific shipment
+  const getUnpaidCount = useCallback((shipmentId: string) => {
+    const alert = alerts.find(a => a.shipmentId === shipmentId);
+    return alert?.unpaidOrdersCount || 0;
+  }, [alerts]);
+
   const alertsCount = alerts.length;
   const hasAlerts = alertsCount > 0;
 
@@ -94,6 +124,8 @@ export function useUnpaidShipmentAlerts(orders: Order[], shipments: Shipment[]) 
     alerts, 
     alertsCount, 
     hasAlerts,
+    hasUnpaidOrders,
+    getUnpaidCount,
     refreshAlerts: calculateAlerts 
   };
 }
