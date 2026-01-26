@@ -3,6 +3,7 @@ import { Order, Client, Product } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -17,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Package } from 'lucide-react';
+import { Package, FlaskConical } from 'lucide-react';
 import { Shipment } from '@/hooks/useShipments';
 
 interface EditOrderDialogProps {
@@ -47,6 +48,7 @@ export function EditOrderDialog({ open, onOpenChange, order, clients, products, 
     supplierCost: 0,
     salePrice: 0,
     shipmentId: '',
+    isInternalTest: false,
   });
 
   const [availableSizes, setAvailableSizes] = useState<string[]>([]);
@@ -70,6 +72,7 @@ export function EditOrderDialog({ open, onOpenChange, order, clients, products, 
         supplierCost: order.supplierCost,
         salePrice: order.salePrice,
         shipmentId: order.shipmentId || '',
+        isInternalTest: order.isInternalTest || false,
       });
       
       // Find the product and its sizes
@@ -111,13 +114,14 @@ export function EditOrderDialog({ open, onOpenChange, order, clients, products, 
       onSave({
         ...order,
         ...formData,
+        salePrice: formData.isInternalTest ? formData.supplierCost : formData.salePrice,
         status: order.status, // Keep existing status
       });
       onOpenChange(false);
     }
   };
 
-  const profit = (formData.salePrice - formData.supplierCost) * formData.quantity;
+  const profit = formData.isInternalTest ? 0 : (formData.salePrice - formData.supplierCost) * formData.quantity;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -251,6 +255,24 @@ export function EditOrderDialog({ open, onOpenChange, order, clients, products, 
             </div>
           </div>
 
+          {/* Internal Test Order */}
+          <div className="flex items-center space-x-3 p-4 rounded-lg bg-warning/10 border border-warning/20">
+            <Checkbox
+              id="isInternalTest"
+              checked={formData.isInternalTest}
+              onCheckedChange={(checked) => setFormData({ ...formData, isInternalTest: checked === true })}
+            />
+            <div className="flex-1">
+              <Label htmlFor="isInternalTest" className="flex items-center gap-2 cursor-pointer">
+                <FlaskConical className="h-4 w-4 text-warning" />
+                Pedido de Teste Interno
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                Marque se esta camisa é para uso próprio da loja. Não será contabilizado no lucro.
+              </p>
+            </div>
+          </div>
+
           {/* Shipment Selection */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
@@ -290,14 +312,28 @@ export function EditOrderDialog({ open, onOpenChange, order, clients, products, 
           </div>
 
           {/* Profit Preview */}
-          <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Lucro estimado:</span>
-              <span className={`text-lg font-serif font-semibold ${profit >= 0 ? 'text-success' : 'text-destructive'}`}>
-                {profit >= 0 ? '+' : ''} R$ {profit.toFixed(2)}
-              </span>
+          {!formData.isInternalTest && (
+            <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Lucro estimado:</span>
+                <span className={`text-lg font-serif font-semibold ${profit >= 0 ? 'text-success' : 'text-destructive'}`}>
+                  {profit >= 0 ? '+' : ''} R$ {profit.toFixed(2)}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
+
+          {formData.isInternalTest && (
+            <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Custo interno:</span>
+                <span className="text-lg font-serif font-semibold text-warning">
+                  R$ {(formData.supplierCost * formData.quantity).toFixed(2)}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Este pedido não será contabilizado no faturamento.</p>
+            </div>
+          )}
 
           <DialogFooter className="pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
