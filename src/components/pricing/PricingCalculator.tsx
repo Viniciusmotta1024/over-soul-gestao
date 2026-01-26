@@ -42,6 +42,8 @@ export function PricingCalculator() {
   const [notes, setNotes] = useState('');
   const [includeShirtFreight, setIncludeShirtFreight] = useState(true);
   const [includeDtfFreight, setIncludeDtfFreight] = useState(true);
+  const [customUnitPrice, setCustomUnitPrice] = useState<number | null>(null);
+  const [useCustomPrice, setUseCustomPrice] = useState(false);
 
   // Set default shirt when loaded
   const selectedShirt = shirts.find(s => s.id === shirtId) || shirts[0];
@@ -62,6 +64,16 @@ export function PricingCalculator() {
   const suggestedTotal = totalCost + profitAmount;
   const suggestedUnitPrice = quantity > 0 ? suggestedTotal / quantity : 0;
 
+  // Cálculos para preço personalizado
+  const customTotal = useCustomPrice && customUnitPrice ? customUnitPrice * quantity : null;
+  const customProfitAmount = customTotal ? customTotal - totalCost : null;
+  const customProfitMargin = customProfitAmount && totalCost > 0 ? (customProfitAmount / totalCost) * 100 : null;
+  
+  // Valores finais (usa customizado se ativo, senão sugerido)
+  const finalUnitPrice = useCustomPrice && customUnitPrice ? customUnitPrice : suggestedUnitPrice;
+  const finalTotal = useCustomPrice && customTotal ? customTotal : suggestedTotal;
+  const finalProfitAmount = useCustomPrice && customProfitAmount !== null ? customProfitAmount : profitAmount;
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -80,9 +92,9 @@ export function PricingCalculator() {
       dtfPricePerMeter,
       shirtFreight: shirtFreightCost,
       dtfFreight: dtfFreightCost,
-      profitMargin,
+      profitMargin: useCustomPrice && customProfitMargin !== null ? customProfitMargin : profitMargin,
       totalCost,
-      suggestedPrice: suggestedTotal,
+      suggestedPrice: finalTotal,
       notes: notes || undefined,
     });
   };
@@ -147,13 +159,14 @@ export function PricingCalculator() {
     doc.setFontSize(10);
     doc.text(`Custo Total: ${formatCurrency(totalCost)}`, 14, finalY + 25);
     doc.text(`Custo por Unidade: ${formatCurrency(costPerUnit)}`, 14, finalY + 32);
-    doc.text(`Margem de Lucro: ${profitMargin}%`, 14, finalY + 39);
-    doc.text(`Lucro Estimado: ${formatCurrency(profitAmount)}`, 14, finalY + 46);
+    const displayMargin = useCustomPrice && customProfitMargin !== null ? customProfitMargin : profitMargin;
+    doc.text(`Margem de Lucro: ${displayMargin.toFixed(1)}%`, 14, finalY + 39);
+    doc.text(`Lucro Estimado: ${formatCurrency(finalProfitAmount)}`, 14, finalY + 46);
 
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    doc.text(`VALOR FINAL: ${formatCurrency(suggestedTotal)}`, 14, finalY + 58);
-    doc.text(`Preço por Unidade: ${formatCurrency(suggestedUnitPrice)}`, 14, finalY + 66);
+    doc.text(`VALOR FINAL: ${formatCurrency(finalTotal)}`, 14, finalY + 58);
+    doc.text(`Preço por Unidade: ${formatCurrency(finalUnitPrice)}`, 14, finalY + 66);
 
     if (notes) {
       doc.setFontSize(10);
@@ -180,6 +193,8 @@ export function PricingCalculator() {
     setNotes(quote.notes || '');
     setIncludeShirtFreight(quote.shirtFreight > 0);
     setIncludeDtfFreight(quote.dtfFreight > 0);
+    setUseCustomPrice(false);
+    setCustomUnitPrice(null);
   };
 
   if (configLoading) {
@@ -400,6 +415,56 @@ export function PricingCalculator() {
             />
           </div>
 
+          {/* Seção de Preço Personalizado */}
+          <div className="p-4 rounded-lg bg-accent/30 border border-accent/50 space-y-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={useCustomPrice}
+                onChange={(e) => {
+                  setUseCustomPrice(e.target.checked);
+                  if (e.target.checked && !customUnitPrice) {
+                    setCustomUnitPrice(Math.ceil(suggestedUnitPrice));
+                  }
+                }}
+                className="rounded border-border"
+              />
+              <span className="text-sm font-medium">Usar preço personalizado por unidade</span>
+            </label>
+
+            {useCustomPrice && (
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label>Preço Desejado por Unidade (R$)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={customUnitPrice || ''}
+                    onChange={(e) => setCustomUnitPrice(parseFloat(e.target.value) || 0)}
+                    placeholder={formatCurrency(suggestedUnitPrice)}
+                  />
+                </div>
+                <Card className="bg-background/50 border-0">
+                  <CardContent className="p-4 text-center">
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total do Orçamento</p>
+                    <p className="text-xl font-bold text-foreground">{formatCurrency(customTotal || 0)}</p>
+                  </CardContent>
+                </Card>
+                <Card className={`border-0 ${customProfitAmount && customProfitAmount >= 0 ? 'bg-green-500/10' : 'bg-destructive/10'}`}>
+                  <CardContent className="p-4 text-center">
+                    <p className={`text-xs uppercase tracking-wide mb-1 ${customProfitAmount && customProfitAmount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                      Lucro ({customProfitMargin?.toFixed(1) || 0}%)
+                    </p>
+                    <p className={`text-xl font-bold ${customProfitAmount && customProfitAmount >= 0 ? 'text-green-600 dark:text-green-400' : 'text-destructive'}`}>
+                      {formatCurrency(customProfitAmount || 0)}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+          </div>
+
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 pt-4 border-t border-border/50">
             <Card className="bg-muted/30 border-0">
               <CardContent className="p-4 text-center">
@@ -415,13 +480,16 @@ export function PricingCalculator() {
               </CardContent>
             </Card>
 
-            <Card className="bg-primary/10 border-0">
+            <Card className={`border-0 ${useCustomPrice ? 'bg-accent/30' : 'bg-primary/10'}`}>
               <CardContent className="p-4 text-center">
-                <p className="text-xs text-primary uppercase tracking-wide mb-1 flex items-center justify-center gap-1">
+                <p className={`text-xs uppercase tracking-wide mb-1 flex items-center justify-center gap-1 ${useCustomPrice ? 'text-accent-foreground' : 'text-primary'}`}>
                   <TrendingUp className="h-3 w-3" />
-                  Preço Sugerido (Total)
+                  {useCustomPrice ? 'Preço Final (Total)' : 'Preço Sugerido (Total)'}
                 </p>
-                <p className="text-2xl font-bold text-primary">{formatCurrency(suggestedTotal)}</p>
+                <p className={`text-2xl font-bold ${useCustomPrice ? 'text-accent-foreground' : 'text-primary'}`}>{formatCurrency(finalTotal)}</p>
+                {useCustomPrice && (
+                  <p className="text-xs text-muted-foreground mt-1">Sugerido: {formatCurrency(suggestedTotal)}</p>
+                )}
               </CardContent>
             </Card>
 
@@ -431,7 +499,10 @@ export function PricingCalculator() {
                   <DollarSign className="h-3 w-3" />
                   Preço por Unidade
                 </p>
-                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(suggestedUnitPrice)}</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(finalUnitPrice)}</p>
+                {useCustomPrice && (
+                  <p className="text-xs text-muted-foreground mt-1">Sugerido: {formatCurrency(suggestedUnitPrice)}</p>
+                )}
               </CardContent>
             </Card>
           </div>
