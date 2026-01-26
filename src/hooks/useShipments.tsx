@@ -9,6 +9,7 @@ export interface Shipment {
   status: 'open' | 'ordered' | 'received' | 'closed';
   notes: string | null;
   totalCost: number;
+  dtfMeters: number | null; // Manual DTF meters (whole numbers only)
   createdAt: Date;
   updatedAt: Date;
   orderCount?: number;
@@ -50,6 +51,7 @@ export function useShipments() {
         status: s.status as Shipment['status'],
         notes: s.notes,
         totalCost: Number(s.total_cost),
+        dtfMeters: s.dtf_meters,
         createdAt: new Date(s.created_at),
         updatedAt: new Date(s.updated_at),
         orderCount: countMap.get(s.id) || 0,
@@ -85,6 +87,7 @@ export function useShipments() {
         status: data.status as Shipment['status'],
         notes: data.notes,
         totalCost: Number(data.total_cost),
+        dtfMeters: data.dtf_meters,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
         orderCount: 0,
@@ -113,6 +116,7 @@ export function useShipments() {
           status: shipment.status,
           notes: shipment.notes,
           total_cost: shipment.totalCost,
+          dtf_meters: shipment.dtfMeters,
         })
         .eq('id', shipment.id);
 

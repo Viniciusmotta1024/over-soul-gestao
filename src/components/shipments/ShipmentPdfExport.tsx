@@ -17,6 +17,7 @@ interface ShipmentPdfExportProps {
     dtfFreight: number;
     totalCost: number;
     costPerShirt: number;
+    isManualDtf: boolean;
   };
 }
 
@@ -77,7 +78,7 @@ export function ShipmentPdfExport({ shipment, orders, costBreakdown }: ShipmentP
       body: [
         ['Camisas', `${costBreakdown.totalShirts} un`, formatCurrency(costBreakdown.shirtsCost)],
         ['Frete Camisas', '-', formatCurrency(costBreakdown.shirtsFreight)],
-        ['DTF', `${costBreakdown.dtfMeters.toFixed(1)} m`, formatCurrency(costBreakdown.dtfCost)],
+        ['DTF', `${costBreakdown.dtfMeters} m${costBreakdown.isManualDtf ? '' : ' (auto)'}`, formatCurrency(costBreakdown.dtfCost)],
         ['Frete DTF', '-', formatCurrency(costBreakdown.dtfFreight)],
       ],
       foot: [['CUSTO TOTAL', '', formatCurrency(costBreakdown.totalCost)]],

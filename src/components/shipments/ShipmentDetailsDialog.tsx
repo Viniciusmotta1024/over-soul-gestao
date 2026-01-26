@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Minus, DollarSign, Package, Calculator, Info, FileText } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Minus, DollarSign, Package, Calculator, Info, Edit2, Check, X } from 'lucide-react';
 import { ShipmentPdfExport } from './ShipmentPdfExport';
 import {
   Dialog,
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -43,18 +44,47 @@ export function ShipmentDetailsDialog({
 }: ShipmentDetailsDialogProps) {
   const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const { calculateShipmentCost, formatCurrency, SHIRTS_PER_METER } = useShipmentCostCalculator();
+  const [editingDtf, setEditingDtf] = useState(false);
+  const [dtfValue, setDtfValue] = useState<string>(shipment.dtfMeters?.toString() || '');
+  const { calculateShipmentCost, formatCurrency } = useShipmentCostCalculator();
+
+  // Reset DTF value when shipment changes
+  useEffect(() => {
+    setDtfValue(shipment.dtfMeters?.toString() || '');
+    setEditingDtf(false);
+  }, [shipment.id, shipment.dtfMeters]);
 
   // Orders in this shipment
   const shipmentOrders = orders.filter(o => (o as any).shipmentId === shipment.id);
   
-  // Calculate real shipment cost
-  const costBreakdown = calculateShipmentCost(shipmentOrders);
+  // Calculate real shipment cost with manual DTF
+  const costBreakdown = calculateShipmentCost(shipmentOrders, shipment.dtfMeters);
   
   // Available orders (not in any shipment, pending status)
   const availableOrders = orders.filter(
     o => !(o as any).shipmentId && o.status === 'pending'
   );
+
+  const handleSaveDtf = async () => {
+    const parsedValue = dtfValue.trim() === '' ? null : parseInt(dtfValue, 10);
+    
+    if (parsedValue !== null && (isNaN(parsedValue) || parsedValue < 1)) {
+      return; // Invalid value
+    }
+    
+    const newCost = calculateShipmentCost(shipmentOrders, parsedValue);
+    await onShipmentUpdate({ 
+      ...shipment, 
+      dtfMeters: parsedValue,
+      totalCost: newCost.totalCost 
+    });
+    setEditingDtf(false);
+  };
+
+  const handleCancelDtf = () => {
+    setDtfValue(shipment.dtfMeters?.toString() || '');
+    setEditingDtf(false);
+  };
 
   const handleAddSelected = async () => {
     setLoading(true);
@@ -64,9 +94,9 @@ export function ShipmentDetailsDialog({
       }
       setSelectedOrders([]);
       
-      // Recalculate cost with new orders
+      // Recalculate cost with new orders (preserve manual DTF)
       const updatedOrders = [...shipmentOrders, ...orders.filter(o => selectedOrders.includes(o.id))];
-      const newCost = calculateShipmentCost(updatedOrders);
+      const newCost = calculateShipmentCost(updatedOrders, shipment.dtfMeters);
       
       // Update total cost
       onShipmentUpdate({ ...shipment, totalCost: newCost.totalCost });
@@ -81,9 +111,9 @@ export function ShipmentDetailsDialog({
   const handleRemoveOrder = async (orderId: string) => {
     await onRemoveOrder(orderId, shipment.id);
     
-    // Recalculate cost without removed order
+    // Recalculate cost without removed order (preserve manual DTF)
     const remainingOrders = shipmentOrders.filter(o => o.id !== orderId);
-    const newCost = calculateShipmentCost(remainingOrders);
+    const newCost = calculateShipmentCost(remainingOrders, shipment.dtfMeters);
     
     onShipmentUpdate({ 
       ...shipment, 
@@ -131,7 +161,7 @@ export function ShipmentDetailsDialog({
                     <Info className="h-4 w-4 text-muted-foreground cursor-help" />
                   </TooltipTrigger>
                   <TooltipContent className="max-w-xs">
-                    <p>Calcula o custo considerando que 1 metro de DTF produz {SHIRTS_PER_METER} camisas em média.</p>
+                    <p>Defina manualmente os metros de DTF para esta remessa. DTF só pode ser comprado em metros inteiros.</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
@@ -145,7 +175,42 @@ export function ShipmentDetailsDialog({
               </div>
               <div>
                 <span className="text-muted-foreground block">Metros DTF</span>
-                <span className="text-lg font-semibold">{costBreakdown.dtfMeters.toFixed(1)}m</span>
+                {editingDtf ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={dtfValue}
+                      onChange={(e) => setDtfValue(e.target.value)}
+                      className="h-8 w-20 text-lg font-semibold"
+                      placeholder="Auto"
+                    />
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleSaveDtf}>
+                      <Check className="h-4 w-4 text-green-600" />
+                    </Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8" onClick={handleCancelDtf}>
+                      <X className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-semibold">
+                      {costBreakdown.dtfMeters}m
+                      {!costBreakdown.isManualDtf && <span className="text-xs text-muted-foreground ml-1">(auto)</span>}
+                    </span>
+                    {shipment.status === 'open' && (
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-6 w-6" 
+                        onClick={() => setEditingDtf(true)}
+                      >
+                        <Edit2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                )}
               </div>
               <div>
                 <span className="text-muted-foreground block">Custo por Camisa</span>
@@ -169,7 +234,7 @@ export function ShipmentDetailsDialog({
                   <span>{formatCurrency(costBreakdown.shirtsFreight)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>DTF ({costBreakdown.dtfMeters.toFixed(1)}m)</span>
+                  <span>DTF ({costBreakdown.dtfMeters}m)</span>
                   <span>{formatCurrency(costBreakdown.dtfCost)}</span>
                 </div>
                 <div className="flex justify-between">
