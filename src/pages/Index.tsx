@@ -28,7 +28,7 @@ import { AddProductDialog } from '@/components/products/AddProductDialog';
 import { EditProductDialog } from '@/components/products/EditProductDialog';
 import { DeleteConfirmDialog } from '@/components/shared/DeleteConfirmDialog';
 import { salesChannels, mockSuppliers } from '@/data/mockData';
-import { Package, DollarSign, TrendingUp, Users, LogOut } from 'lucide-react';
+import { Package, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, UserPlus } from 'lucide-react';
 import { Order, Client, Supplier, Product } from '@/types';
@@ -764,6 +764,7 @@ const Index = () => {
         onActivityLogsClick={handleActivityLogsClick}
         onPasswordRecoveryClick={handlePasswordRecoveryClick}
         onTeamClick={handleTeamClick}
+        onLogout={() => signOut()}
         isAdmin={isAdmin}
       />
       
@@ -775,17 +776,8 @@ const Index = () => {
           onNotificationsClick={handleNotificationsClick}
           unpaidShipmentAlerts={unpaidShipmentAlerts}
           onAlertClick={handleUnpaidAlertClick}
-        >
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => signOut()}
-            className="gap-2 text-muted-foreground hover:text-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-            <span className="hidden md:inline">Sair</span>
-          </Button>
-        </Header>
+        />
+        
         
         <div className="p-4 md:p-8">
           {renderContent()}

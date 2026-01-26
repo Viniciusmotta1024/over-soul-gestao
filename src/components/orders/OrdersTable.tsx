@@ -45,6 +45,7 @@ const channelConfig = {
 
 export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onPaymentToggle }: OrdersTableProps) {
   const [orderToUnpay, setOrderToUnpay] = useState<Order | null>(null);
+  const [orderToPay, setOrderToPay] = useState<Order | null>(null);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -62,8 +63,8 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onPayment
       // If currently paid, show confirmation before unmarking
       setOrderToUnpay(order);
     } else {
-      // If not paid, mark as paid directly
-      onPaymentToggle?.(order);
+      // If not paid, show confirmation before marking as paid
+      setOrderToPay(order);
     }
   };
 
@@ -71,6 +72,13 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onPayment
     if (orderToUnpay) {
       onPaymentToggle?.(orderToUnpay);
       setOrderToUnpay(null);
+    }
+  };
+
+  const confirmPay = () => {
+    if (orderToPay) {
+      onPaymentToggle?.(orderToPay);
+      setOrderToPay(null);
     }
   };
 
@@ -208,6 +216,26 @@ export function OrdersTable({ orders, filterChannel, onEdit, onDelete, onPayment
               className="bg-warning hover:bg-warning/90 text-warning-foreground"
             >
               Desmarcar pagamento
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!orderToPay} onOpenChange={(open) => !open && setOrderToPay(null)}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-serif">Confirmar pagamento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja marcar o pedido de <strong>{orderToPay?.customerName}</strong> ({orderToPay?.product} - {orderToPay?.size}) como pago?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmPay}
+              className="bg-success hover:bg-success/90 text-success-foreground"
+            >
+              Confirmar pagamento
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
