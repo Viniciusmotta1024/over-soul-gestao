@@ -38,6 +38,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useProducts } from '@/hooks/useProducts';
 import { useShipments } from '@/hooks/useShipments';
 import { useOrderNotifications } from '@/hooks/useOrderNotifications';
+import { useUnpaidShipmentAlerts } from '@/hooks/useUnpaidShipmentAlerts';
 import { useUserRoles } from '@/hooks/useUserRoles';
 import { Skeleton } from '@/components/ui/skeleton';
 import { isAfter, isBefore, startOfDay, endOfDay, startOfMonth, endOfMonth, subMonths } from 'date-fns';
@@ -65,6 +66,7 @@ const Index = () => {
   const { products, loading: productsLoading, addProduct, updateProduct, deleteProduct, updateProductsOrder } = useProducts();
   const { shipments, refetch: refetchShipments } = useShipments();
   const { newOrdersCount, clearNotifications } = useOrderNotifications();
+  const { alerts: unpaidShipmentAlerts } = useUnpaidShipmentAlerts(orders, shipments);
   const { isAdmin, teamMembers, createUser, updateUserRole, removeUser } = useUserRoles();
   const { toast } = useToast();
   
@@ -426,6 +428,10 @@ const Index = () => {
     refetchOrders();
   };
 
+  const handleUnpaidAlertClick = (shipmentId: string) => {
+    setActiveTab('shipments');
+  };
+
   const handleActivityLogsClick = () => {
     setActivityLogsOpen(true);
   };
@@ -744,6 +750,8 @@ const Index = () => {
           subtitle={subtitle}
           newOrdersCount={newOrdersCount}
           onNotificationsClick={handleNotificationsClick}
+          unpaidShipmentAlerts={unpaidShipmentAlerts}
+          onAlertClick={handleUnpaidAlertClick}
         >
           <Button 
             variant="ghost" 
