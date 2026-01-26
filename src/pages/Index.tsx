@@ -3,6 +3,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { ChannelCard } from '@/components/dashboard/ChannelCard';
+import { UnpaidShipmentsSummary } from '@/components/dashboard/UnpaidShipmentsSummary';
 import { RecentOrders } from '@/components/dashboard/RecentOrders';
 import { OrdersTable } from '@/components/orders/OrdersTable';
 import { OrderFilters, OrderFiltersState } from '@/components/orders/OrderFilters';
@@ -438,6 +439,10 @@ const Index = () => {
     setActiveTab('orders');
   };
 
+  const handleNavigateToShipments = () => {
+    setActiveTab('shipments');
+  };
+
   const handleActivityLogsClick = () => {
     setActivityLogsOpen(true);
   };
@@ -514,6 +519,15 @@ const Index = () => {
                 delay={300}
               />
             </div>
+
+            {/* Unpaid Shipments Summary */}
+            <UnpaidShipmentsSummary
+              alerts={unpaidShipmentAlerts}
+              orders={orders}
+              shipments={shipments}
+              onNavigateToOrders={handleUnpaidAlertClick}
+              onNavigateToShipments={handleNavigateToShipments}
+            />
 
             {/* Channels */}
             <div>
