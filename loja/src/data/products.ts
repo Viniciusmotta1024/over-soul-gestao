@@ -11,7 +11,10 @@ function variant(slug: string, color: ProductColor): ProductVariant {
   };
 }
 
-// Showcase order = `order`. Missing price/message/reference are intentionally
+/** Same price for every shirt today (BRL). */
+const PRICE = 89.9;
+
+// Showcase order = `order`. Missing message/reference are intentionally
 // absent (see docs/PENDENCIAS.md). Never fill them with guesses.
 export const products: Product[] = [
   {
@@ -20,6 +23,7 @@ export const products: Product[] = [
     reference: "Filipenses 1:21",
     variants: [variant("viver-e-cristo", "verde")],
     featured: true,
+    price: PRICE,
     order: 1,
   },
   {
@@ -27,24 +31,30 @@ export const products: Product[] = [
     name: "Is The Same",
     reference: "Hebreus 13:8",
     variants: [variant("is-the-same", "preto"), variant("is-the-same", "branco")],
+    price: PRICE,
     order: 2,
   },
   {
     slug: "jesus-vive",
     name: "Jesus Vive",
     variants: [variant("jesus-vive", "preto")],
+    isNew: true,
+    price: PRICE,
     order: 3,
   },
   {
     slug: "venceu-a-morte",
     name: "Venceu a Morte",
     variants: [variant("venceu-a-morte", "preto")],
+    isNew: true,
+    price: PRICE,
     order: 4,
   },
   {
     slug: "jesus-esta-voltando",
     name: "Jesus está voltando",
     variants: [variant("jesus-esta-voltando", "preto")],
+    price: PRICE,
     order: 5,
   },
   {
@@ -52,6 +62,7 @@ export const products: Product[] = [
     name: "Cristo em mim",
     reference: "Gálatas 2:20",
     variants: [variant("cristo-em-mim", "azul")],
+    price: PRICE,
     order: 6,
   },
   {
@@ -59,12 +70,14 @@ export const products: Product[] = [
     name: "Frutos do Espírito",
     reference: "Gálatas 5:22-23",
     variants: [variant("frutos-do-espirito", "preto")],
+    price: PRICE,
     order: 7,
   },
   {
     slug: "jesus-cristo",
     name: "Jesus Cristo",
     variants: [variant("jesus-cristo", "branco"), variant("jesus-cristo", "verde")],
+    price: PRICE,
     order: 8,
   },
   {
@@ -72,12 +85,14 @@ export const products: Product[] = [
     name: "Evangelho",
     reference: "Romanos 1:16",
     variants: [variant("evangelho", "branco")],
+    price: PRICE,
     order: 9,
   },
   {
     slug: "faith",
     name: "Faith",
     variants: [variant("faith", "branco")],
+    price: PRICE,
     order: 10,
   },
 ];

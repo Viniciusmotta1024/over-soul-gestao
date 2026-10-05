@@ -44,7 +44,7 @@ export const site = {
   ] as SizeChartRow[],
   sizeChartNote: "As medidas podem variar 2 cm para mais ou para menos." as string | undefined,
   fabric: "100% algodão · fio 30.1 · 160 g/m²" as string | undefined,
-  madeIn: undefined as string | undefined, // e.g. "Feita no Brasil"
+  madeIn: "Feita no Rio de Janeiro, Brasil" as string | undefined,
   /** Extra rows for the product specifications, in display order. */
   details: [
     { label: "Modelagem", value: "Oversize americana, caimento reto e estruturado" },

@@ -37,13 +37,15 @@ export const faq: FaqItem[] = [
   },
   {
     id: "prazo",
-    question: "Qual o prazo de entrega?",
-    answer: "",
+    question: "Qual o prazo?",
+    answer:
+      "Nossas camisas são feitas sob demanda: depois do seu pedido, encomendamos a camisa e a estampa em DTF ao fornecedor e prensamos a arte na peça. Esse processo leva cerca de 15 dias, do pedido até o envio. O tempo de entrega depois do envio depende da sua cidade e a gente informa no WhatsApp.",
   },
   {
     id: "pagamento",
     question: "Como pago?",
-    answer: "",
+    answer:
+      "Por enquanto, o pagamento é combinado pelo WhatsApp, na hora de fechar o pedido. Envie a mensagem com a camisa escolhida e a gente passa as opções.",
   },
   {
     id: "troca",

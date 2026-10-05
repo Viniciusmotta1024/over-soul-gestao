@@ -8,6 +8,7 @@ import { formatPrice } from "@/lib/format";
 import type { Product, ProductColor, ProductSide } from "@/types/product";
 import { ColorPicker } from "./ColorPicker";
 import { Gallery } from "./Gallery";
+import { NewBadge } from "./NewBadge";
 import { OrderButton } from "./OrderButton";
 import { SizePicker } from "./SizePicker";
 
@@ -40,6 +41,7 @@ export function ProductView({ product, initialColor, children }: ProductViewProp
       <Gallery product={product} variant={variant} side={side} onSideChange={setSide} />
 
       <div className="lg:sticky lg:top-24 lg:self-start lg:pt-4">
+        {product.isNew ? <NewBadge className="mb-4" /> : null}
         <h1 className="font-serif text-h1 font-medium text-ink">{product.name}</h1>
         {product.reference ? (
           <p className="mt-2 font-serif text-xl text-muted italic">{product.reference}</p>

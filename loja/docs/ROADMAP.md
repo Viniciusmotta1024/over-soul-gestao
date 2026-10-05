@@ -13,7 +13,7 @@ Fora da v1, por decisão de escopo. O código já tem pontos de extensão marcad
 
 - **Carrinho** com vários itens em uma única mensagem de WhatsApp.
 - **Estoque/disponibilidade por tamanho** (campo novo em `ProductVariant`).
-- **Checkout real** (Mercado Pago, Stripe ou Pix) — exigiria rotas de servidor, segredos (`.env.local`) e política de troca publicada.
+- **Checkout real** — provável Yampi (o botão "Pedir no WhatsApp" passaria a levar ao checkout; hoje a venda fecha no WhatsApp). Antes, publicar a política de troca.
 
 ## Longo prazo
 

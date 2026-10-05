@@ -4,6 +4,7 @@ import { formatPrice, imageAlt, otherSide } from "@/lib/format";
 import { productUrl } from "@/lib/seo";
 import type { Product } from "@/types/product";
 import { ColorDots } from "./ColorDots";
+import { NewBadge } from "./NewBadge";
 
 type ProductCardProps = {
   product: Product;
@@ -46,6 +47,7 @@ export function ProductCard({
           sizes={sizes}
           className="object-cover opacity-0 transition-opacity duration-500 ease-out group-hover:opacity-100"
         />
+        {product.isNew ? <NewBadge className="absolute top-3 left-3" /> : null}
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 px-1 pt-4">

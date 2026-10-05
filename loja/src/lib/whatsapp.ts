@@ -1,6 +1,6 @@
 import { site } from "../data/site";
 import type { Product, ProductColor } from "../types/product";
-import { colorName } from "./format";
+import { colorName, formatPrice } from "./format";
 
 let warned = false;
 
@@ -25,16 +25,19 @@ export function buildOrderMessage({
   color,
   size,
 }: {
-  product: Pick<Product, "name">;
+  product: Pick<Product, "name" | "price">;
   color: ProductColor;
   size?: string;
 }): string {
   const sizePart = size ? `, tamanho ${size}` : "";
+  if (typeof product.price === "number") {
+    return `Olá! Quero a camiseta ${product.name} (${colorName(color)})${sizePart}, de ${formatPrice(product.price)}. Como faço para fechar o pedido?`;
+  }
   return `Olá! Quero a camiseta ${product.name} (${colorName(color)})${sizePart}. Pode me passar o valor e as formas de pagamento?`;
 }
 
 export function buildWhatsAppUrl(params: {
-  product: Pick<Product, "name">;
+  product: Pick<Product, "name" | "price">;
   color: ProductColor;
   size?: string;
 }): string {

@@ -10,10 +10,11 @@ Tudo fica em arquivos dentro de `loja/src/data/`. Depois de editar, rode `npm ru
   name: "Viver é Cristo",
   reference: "Filipenses 1:21",    // opcional — só se confirmado
   message: "Duas a quatro frases sobre a palavra da camisa.", // opcional
-  price: 119.9,                    // opcional — sem ele aparece "Valor no WhatsApp"
+  price: PRICE,                    // hoje R$ 89,90 para todas (constante PRICE); sem ele aparece "Valor no WhatsApp"
   variants: [variant("viver-e-cristo", "verde")], // a primeira cor é a padrão
   cover: "verso",                  // opcional — lado mostrado no card (padrão: verso)
   featured: true,                  // só UM produto: é o do hero
+  isNew: true,                     // opcional — selo "Lançamento" no card e na página
   order: 1,                        // posição na vitrine
 }
 ```

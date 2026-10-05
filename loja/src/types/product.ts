@@ -17,6 +17,7 @@ export interface Product {
   cover?: ProductSide; // side shown on the card (default: "verso")
   price?: number; // BRL; missing => "Valor no WhatsApp"
   featured?: boolean; // exactly one product is true (hero)
+  isNew?: boolean; // shows the "Lançamento" badge
   order: number;
 }
 

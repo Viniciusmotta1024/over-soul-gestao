@@ -35,6 +35,7 @@ export function productJsonLd(product: Product) {
             "@type": "Offer",
             price: product.price.toFixed(2),
             priceCurrency: "BRL",
+            availability: "https://schema.org/MadeToOrder",
             url: absoluteUrl(productUrl(product.slug)),
           },
         }
