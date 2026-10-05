@@ -1,0 +1,5 @@
+.next
+node_modules
+public
+assets-source
+package-lock.json
