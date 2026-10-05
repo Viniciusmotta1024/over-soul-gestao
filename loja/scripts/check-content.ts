@@ -32,8 +32,6 @@ async function main() {
   if (!site.whatsappNumber) add("blocker", "NEXT_PUBLIC_WHATSAPP_NUMBER vazio (pedidos não chegam à loja).");
   else if (!/^55\d{10,11}$/.test(site.whatsappNumber))
     add("blocker", `NEXT_PUBLIC_WHATSAPP_NUMBER fora do formato 55DDDNÚMERO: "${site.whatsappNumber}".`);
-  if (!process.env.NEXT_PUBLIC_SITE_URL?.trim())
-    add("high", `NEXT_PUBLIC_SITE_URL vazio (usando ${site.url} em SEO, sitemap e Open Graph).`);
   if (!site.instagramUrl)
     add("low", "NEXT_PUBLIC_INSTAGRAM_URL vazio (link do Instagram não aparece no rodapé).");
   if (!site.ministryUrl)

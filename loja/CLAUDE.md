@@ -25,7 +25,7 @@ Catálogo em arquivos TypeScript (sem banco, sem CMS). Componentes de servidor p
 - Tamanhos, medidas, tecido, origem: `src/data/site.ts`
 - FAQ: `src/data/faq.ts`
 - Textos da home: `src/components/home/*.tsx`
-- Contatos e URL: variáveis de ambiente (`.env.example`)
+- WhatsApp e URL: padrões em `src/data/site.ts` (`DEFAULT_*`), sobrescrevíveis por variáveis de ambiente (`.env.example`)
 
 ## Regra de ouro: nada de placeholder em produção
 

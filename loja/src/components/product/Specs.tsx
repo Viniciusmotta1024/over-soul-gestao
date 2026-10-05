@@ -1,10 +1,11 @@
 import { site } from "@/data/site";
 
-/** Fabric, origin and size chart. Each item disappears when not filled in. */
+/** Model details, fabric, origin and size chart. Each item disappears when not filled in. */
 export function Specs() {
   const chart = site.sizeChart;
   const columns = [...new Set(chart.flatMap((row) => Object.keys(row.measures)))];
   const items = [
+    ...site.details,
     site.fabric ? { label: "Tecido", value: site.fabric } : null,
     site.madeIn ? { label: "Origem", value: site.madeIn } : null,
   ].filter((item) => item !== null);
@@ -29,7 +30,7 @@ export function Specs() {
       ) : null}
 
       {chart.length > 0 ? (
-        <div className="mt-6 overflow-x-auto">
+        <div id="medidas" className="mt-6 overflow-x-auto">
           <table className="w-full min-w-[20rem] text-left text-sm">
             <caption className="pb-2 text-left text-caption text-muted">Medidas em centímetros</caption>
             <thead>
@@ -59,6 +60,11 @@ export function Specs() {
               ))}
             </tbody>
           </table>
+          <p className="mt-3 text-caption text-muted">
+            Largura: de uma axila à outra. Comprimento: do ombro, junto à gola, até a barra. Mangas: da
+            costura do ombro até a ponta da manga.
+            {site.sizeChartNote ? ` ${site.sizeChartNote}` : ""}
+          </p>
         </div>
       ) : null}
     </section>

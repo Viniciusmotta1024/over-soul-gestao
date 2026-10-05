@@ -2,7 +2,7 @@
 
 ## 1. Antes de tudo
 
-- Tenha o **número do WhatsApp** da loja no formato `55DDDNÚMERO` (só dígitos).
+- Confira o **número do WhatsApp** padrão em `src/data/site.ts` (`DEFAULT_WHATSAPP_NUMBER`).
 - Rode localmente: `npm run check:strict` precisa terminar sem erro com o `.env.local` preenchido.
 
 ## 2. Criar o projeto
@@ -16,12 +16,12 @@
 
 Em **Settings → Environment Variables**, cadastre para _Production_ (e _Preview_, se quiser testar):
 
-| Variável                      | Exemplo                         | Obrigatória                                       |
-| ----------------------------- | ------------------------------- | ------------------------------------------------- |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | `55DDDNÚMERO`                   | **Sim** — sem ela o build de produção falha       |
-| `NEXT_PUBLIC_SITE_URL`        | `https://seudominio.com.br`     | Recomendada (sem ela usa o domínio `.vercel.app`) |
-| `NEXT_PUBLIC_INSTAGRAM_URL`   | link do perfil                  | Não — sem ela o link some                         |
-| `NEXT_PUBLIC_MINISTRY_URL`    | link do Vestindo seu Ministério | Não — sem ela o link some                         |
+| Variável                      | Exemplo                         | Obrigatória                                    |
+| ----------------------------- | ------------------------------- | ---------------------------------------------- |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | `5521998959167`                 | Não — já tem esse padrão em `src/data/site.ts` |
+| `NEXT_PUBLIC_SITE_URL`        | `https://lojaoversoul.com.br`   | Não — já tem esse padrão                       |
+| `NEXT_PUBLIC_INSTAGRAM_URL`   | link do perfil                  | Não — sem ela o link some                      |
+| `NEXT_PUBLIC_MINISTRY_URL`    | link do Vestindo seu Ministério | Não — sem ela o link some                      |
 
 Não reutilize números ou links de outros projetos. As variáveis `NEXT_PUBLIC_*` são embutidas no build:
 **depois de mudar qualquer uma, faça um Redeploy.**
@@ -40,7 +40,7 @@ Clique em **Deploy**. O `prebuild` roda `scripts/check-content.ts`:
 2. No provedor do domínio, crie exatamente o registro que a Vercel mostrar na tela (em geral um CNAME para subdomínio
    ou um registro A para domínio raiz; copie os valores de lá).
 3. Aguarde a verificação e o certificado HTTPS (automático).
-4. Atualize `NEXT_PUBLIC_SITE_URL` para o domínio final e faça **Redeploy**.
+4. O domínio `lojaoversoul.com.br` já é o padrão do site. Se usar outro (ex.: `www.`), defina `NEXT_PUBLIC_SITE_URL` e faça **Redeploy**.
 
 ## 6. Conferir depois de publicar
 
